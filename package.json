@@ -1,12 +1,10 @@
 {
-  "name": "envelope",
+  "name": "c5-envelope",
   "version": "1.0.0",
-  "description": "ENVELOPE Repository",
+  "description": "C5-ENVELOPE Repository",
   "main": "./lang/ts/envelope.js",
   "types": "./lang/ts/envelope.ts",
   "scripts": {
-    "test": "jest -c jest.unit.js",
-    "start": "node dist/srv/ng",
     "build": "npm run generate-ts; npm run generate-jschema; npm run generate-python; npm run generate-csharp; npm run generate-java",
     "generate-ts": "mkdir -p lang/ts && cd schema && quicktype --lang typescript -s typscript ./envelope.ts ./payload.ts -o ../lang/ts/envelope.ts; tsc ../lang/ts/envelope.ts",
     "generate-jschema": "mkdir -p lang/jschema && cd schema && quicktype --lang schema -s typescript ./envelope.ts ./payload.ts -o ../lang/jschema/envelope.json",
@@ -14,8 +12,9 @@
     "generate-csharp": "mkdir -p lang/csharp && cd schema && quicktype --lang csharp -s csharp ./envelope.ts ./payload.ts -o ../lang/csharp/envelope.cs",
     "generate-java": "mkdir -p lang/java && cd schema && quicktype --lang java -s java ./envelope.ts ./payload.ts -o ../lang/java/envelope.java"
   },
-  "author": "",
-  "license": "ISC",
+  "homepage": "https://github.com/mabels/c5-envelope#readme",
+  "author": "Meno Abels",
+  "license": "AFL-2.0",
   "dependencies": {
     "express": "^4.17.1",
     "http-terminator": "^2.0.3",
