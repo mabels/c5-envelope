@@ -16,8 +16,10 @@
   "author": "Meno Abels",
   "license": "AFL-2.0",
   "dependencies": {
+    "@peculiar/webcrypto": "^1.1.7"
   },
   "devDependencies": {
+    "@types/node": "^15.3.1",
     "quicktype": "^15.0.260",
     "typescript": "^4.2.4"
   }
