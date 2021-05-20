@@ -1,4 +1,3 @@
-
 import { Payload } from './payload';
 
 export interface Envelope<T = unknown> {

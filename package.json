@@ -2,10 +2,10 @@
   "name": "c5-envelope",
   "version": "1.0.1",
   "description": "C5-ENVELOPE Repository",
-  "main": "./lang/ts/envelope.js",
-  "types": "./lang/ts/envelope.ts",
+  "main": "./dist/src/index.js",
   "scripts": {
-    "build": "npm run generate-ts; npm run generate-jschema; npm run generate-python; npm run generate-csharp; npm run generate-java",
+    "build": "npm run generate-ts; npm run compile; npm run generate-jschema; npm run generate-python; npm run generate-csharp; npm run generate-java",
+    "compile": "tsc",
     "generate-ts": "mkdir -p lang/ts && cd schema && quicktype --lang typescript -s typscript ./envelope.ts ./payload.ts -o ../lang/ts/envelope.ts; tsc ../lang/ts/envelope.ts",
     "generate-jschema": "mkdir -p lang/jschema && cd schema && quicktype --lang schema -s typescript ./envelope.ts ./payload.ts -o ../lang/jschema/envelope.json",
     "generate-python": "mkdir -p lang/python && cd schema && quicktype --lang python -s python ./envelope.ts ./payload.ts -o ../lang/python/envelope.py",
@@ -16,8 +16,10 @@
   "author": "Meno Abels",
   "license": "AFL-2.0",
   "dependencies": {
+    "@peculiar/webcrypto": "^1.1.7"
   },
   "devDependencies": {
+    "@types/node": "^15.3.1",
     "quicktype": "^15.0.260",
     "typescript": "^4.2.4"
   }
