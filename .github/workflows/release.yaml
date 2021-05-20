@@ -1,7 +1,7 @@
 # This workflow will do a clean install of node dependencies, build the source code and run tests across different versions of node
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
 
-name: Release - Entenpreis
+name: Release - C5-Envelope
 
 on:
   push:
@@ -24,7 +24,7 @@ jobs:
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v1
 
-    - name: Build Entenpreis
+    - name: Build C5-Envelope
       run: |
         npm ci
         npm install
@@ -37,7 +37,7 @@ jobs:
         ls -l
         ./neckless version
 
-    - name: Publish Entenpreis
+    - name: Publish C5-Envelope
       env:
         NECKLESS_PRIVKEY: ${{ secrets.NECKLESS_PRIVKEY }}
       run: |
