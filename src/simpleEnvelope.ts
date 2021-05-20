@@ -14,13 +14,7 @@ export interface SimpleEnvelope<T = unknown> {
 export interface SimpleEnvelope {}
 
 export async function simpleEnvelope<T>(env: SimpleEnvelope<T>): Promise<Envelope<T>> {
-  const data = Buffer.from(JSON.stringify(env.data), 'utf-8');
-  const crypto = new Crypto();
-  const hex = await crypto.subtle.digest(
-    'SHA-256', // SHA-1, SHA-256, SHA-384, or SHA-512
-    data
-  );
-
+  const hex = await createSHA256(JSON.stringify(env.data));
   const date = env.t || new Date();
   const id = `${date.getTime()}-${hex}`;
   return {
@@ -32,4 +26,16 @@ export async function simpleEnvelope<T>(env: SimpleEnvelope<T>): Promise<Envelop
     ttl: env.ttl || 10,
     data: env.data,
   };
+}
+
+export async function createSHA256(message: string): Promise<string> {
+  const text = new TextEncoder().encode(message);
+  const crypto = new Crypto();
+  const hashBuffer = await crypto.subtle.digest(
+    'SHA-256', // SHA-1, SHA-256, SHA-384, or SHA-512
+    text
+  );
+  const hashArray = Array.from(new Uint8Array(hashBuffer)); // convert buffer to byte array
+  const hex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+  return hex;
 }

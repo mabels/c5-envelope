@@ -29,6 +29,7 @@ jobs:
         npm ci
         npm install
         npm run build
+        npm run test
 
     - name: Fetch Neckless
       run: |
