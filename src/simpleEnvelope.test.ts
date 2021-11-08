@@ -34,7 +34,7 @@ it('test simple envelope', () => {
     data,
     src,
   };
-  const t = new Date().getTime();
+  const t = 1624140000000
 
   const expected: Envelope = {
     v: 'A',
