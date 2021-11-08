@@ -44,7 +44,7 @@ jobs:
       env:
         NECKLESS_PRIVKEY: ${{ secrets.NECKLESS_PRIVKEY }}
       run: |
-        eval $(./neckless kv  ls  --shKeyValue --ghAddMask NPM_PASS  NPM_USER "NPM_TOTP@Totp())
+        eval $(./neckless kv ls --shKeyValue --ghAddMask NPM_PASS  NPM_USER "NPM_TOTP@Totp()")
         # env | sort | grep NPM
         token=$(curl -H "npm-otp: $NPM_TOTP" \
              -X PUT \
@@ -58,7 +58,7 @@ jobs:
       env:
         NECKLESS_PRIVKEY: ${{ secrets.NECKLESS_PRIVKEY }}
       run: |
-        eval $(./neckless kv  ls  --shKeyValue --ghAddMask TWINE_PASSWORD")
+        eval $(./neckless kv  ls  --shKeyValue --ghAddMask TWINE_PASSWORD)
         npm run generate-python
         python3 -m src.simple_envelope_test
         python3 -m pip install --upgrade build
