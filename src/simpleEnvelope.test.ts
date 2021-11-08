@@ -17,7 +17,7 @@ it('test simple sha256 creation', async () => {
 });
 
 it('test simple envelope', async () => {
-  expect.assertions(1);
+  // expect.assertions(1);
 
   const data = {
     kind: 'test',
@@ -39,6 +39,9 @@ it('test simple envelope', async () => {
     t,
     ttl: 10,
   };
+  expect(`${t}`).toEqual('1624140000000')
+
+  expect(expected.id).toEqual(`${t}-2b9cdc38d459ed98dfa583fae1388de2f69384561b9bca0491f037c3ce0743a9`)
 
   await expect(simpleEnvelope(env)).resolves.toEqual(expected);
 });

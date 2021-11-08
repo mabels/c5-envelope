@@ -5,6 +5,7 @@ from .lang.python.envelope import *
 import json
 from datetime import datetime
 import hashlib
+import math
 
 
 @dataclass
@@ -25,7 +26,7 @@ def simple_envelope(env: SimpleEnvelope) -> EnvelopeT:
     else:
         date = env.t
     if env.id is None:
-        id = '{date}-{hex}'.format(date=date, hex=hex)
+        id = '{t}-{hex}'.format(t=math.ceil(date.timestamp()), hex=hex)
     else:
         id = env.id
     if isinstance(env.dst, list):

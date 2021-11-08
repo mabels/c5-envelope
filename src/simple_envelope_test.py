@@ -1,4 +1,4 @@
-
+import math
 from datetime import datetime
 import unittest
 import json
@@ -35,18 +35,19 @@ class SimpleEnvelopeTest(unittest.TestCase):
         t = datetime.now()
         expected = EnvelopeT.from_dict({
             'v': 'A',
-            'id': '{t}-{x}'.format(t=t, x=create_sha256(json.dumps(data))),
+            'id': '{t}-{x}'.format(t=math.ceil(t.timestamp()), x=create_sha256(json.dumps(data))),
             'src': src,
             'data': PayloadT.from_dict(data).to_dict(),
             'dst': [],
             't': t.timestamp(),
             'ttl': 10,
         })
+        self.assertEqual(expected.id, '{t}-b8cd9e0a38b50027ea91b1ce81e28724839751bed0d066b43655b329f90172ae'.format(t=math.ceil(t.timestamp())))
         se = simple_envelope(env)
         self.assertLess(se.t - expected.t, 0.02)
         # print(se.id)
         # print(expected.id)
-        self.assertTrue(se.id.endswith(expected.id.split('-')[3]))
+        self.assertTrue(se.id.endswith(expected.id.split('-')[1]))
         se.id = expected.id
         se.t = expected.t
         self.assertEqual(se.to_dict(), expected.to_dict())
