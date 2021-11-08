@@ -38,5 +38,6 @@ jobs:
         npm run build
         npm run test
         npm pack
+        PYTHON_PATH=. python3 src/simple_envelope_test.py
         python3 -m build
 

@@ -1,10 +1,10 @@
 import os
-import setuptools
 import sys
+import setuptools
 import json
 from shutil import copyfile
 from setuptools.command.install import install
-
+from pathlib import Path
 
 
 def read(fname):
@@ -12,33 +12,70 @@ def read(fname):
     return f.read()
 
 
-def write_init():
+def write_init(version: str):
+  with open("./lang/python/version.py", "w") as init_file:
+    print("__version__ = '{version}'".format(version=version), file=init_file)
   with open("./lang/python/__init__.py", "w") as init_file:
     print("# generated", file=init_file)
     print("from .envelope import *", file=init_file)
     print("from .simple_envelope import *", file=init_file)
+    print("from .version import __version__", file=init_file)
     print("if __name__ == '__main__':", file=init_file)
     print(" print('ready to format a c5 envelope')", file=init_file)
 
-class PreInstallCommand(install):
-    """Pre-installation for installation mode."""
-    def run(self):
-        write_init()
-        copyfile('./src/simple_envelope.py', './lang/python/simple_envelope.py')
-        install.run(self)
+#class PreInstallCommand(install):
+#    """Pre-installation for installation mode."""
+#    def run(self):
 
+
+
+#print(sys.argv)
+#print(os.environ)
+
+main_ns = {
+        '__name__': 'hack'
+        }
+
+if Path("./package.json").is_file():
+    version = json.loads(read('package.json'))['version']
+    main_ns['__version__'] = version
+
+
+#ver_path = convert_path('__init__.py')
+
+if sys.argv[0] == 'setup.py' and sys.argv[1] == 'sdist':
+    version = json.loads(read('package.json'))['version']
+    write_init(version)
+    copyfile('./src/simple_envelope.py', './lang/python/simple_envelope.py')
+    copyfile('./package.json', './lang/python/package.json')
+    #main_ns['__version__'] = version
+
+lang_python_init = Path("./lang/python/version.py")
+if lang_python_init.is_file():
+    #dir = os.path.join(os.getcwd(), os.path.dirname(lang_python_init))
+    #print(dir)
+    #sys.path.append(dir)
+    with open(lang_python_init) as ver_file:
+      c = ver_file.read()
+      #print(c)
+      exec(c, main_ns)
+
+#install.run(self)
+
+if main_ns['__version__'] == 'hack':
+    print("i-3424ri0jrejoifeowjofgjeajofewoifjoiweafgjoaogsgojavfds");
 
 setuptools.setup(
   name='c5-envelope',
-  version=json.loads(read('package.json'))['version'],
+  version=main_ns['__version__'],
   author='Meno Abels',
   author_email='meno.abels@adviser.com',
   setup_requires=[],
   install_requires=[],
   ext_modules=[],
   cmdclass={
-        'install': PreInstallCommand,
-    },
+#        'install': PreInstallCommand,
+  },
   # packages=setuptools.find_packages(),
   packages=['c5_envelope'],
   package_dir={

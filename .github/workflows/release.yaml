@@ -53,6 +53,7 @@ jobs:
              https://registry.npmjs.org/-/user/org.couchdb.user:$NPM_USER | jq -r .token)
         echo "//registry.npmjs.org/:_authToken=$token" > $HOME/.npmrc
         npm publish --otp=$(./neckless kv ls --onlyValue "NPM_TOTP@Totp()")
+        PYTHON_PATH=. python3 src/simple_envelope_test.py
         python3 -m build
         pip3 install twine
         python3 -m twine upload dist/* -u fastandfearless 
