@@ -51,9 +51,6 @@ if sys.argv[0] == 'setup.py' and sys.argv[1] == 'sdist':
     #main_ns['__version__'] = version
 
 
-import subprocess
-subprocess.run(["ls", "-l"])
-
 lang_python_init = Path("./src/lang/python/version.py")
 if lang_python_init.is_file():
     with open(lang_python_init) as ver_file:
@@ -79,9 +76,6 @@ setuptools.setup(
   setup_requires=[],
   install_requires=[],
   ext_modules=[],
-  cmdclass={
-#        'install': PreInstallCommand,
-  },
   packages=['c5_envelope', 'c5_envelope.lang.python'],
   package_dir={
       'c5_envelope': 'src', 
