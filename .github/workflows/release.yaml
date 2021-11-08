@@ -42,7 +42,7 @@ jobs:
         NECKLESS_PRIVKEY: ${{ secrets.NECKLESS_PRIVKEY }}
       run: |
         rm -rf ./dist
-        eval $(./neckless kv ls --shKeyValue --ghAddMask NPM_PASS  NPM_USER "NPM_TOTP@Totp()")
+        eval $(neckless kv ls --shKeyValue --ghAddMask NPM_PASS  NPM_USER "NPM_TOTP@Totp()")
         # env | sort | grep NPM
         token=$(curl -H "npm-otp: $NPM_TOTP" \
              -X PUT \
@@ -50,14 +50,14 @@ jobs:
              -d "{\"name\":\"$NPM_USER\", \"password\": \"$NPM_PASS\"}" \
              https://registry.npmjs.org/-/user/org.couchdb.user:$NPM_USER | jq -r .token)
         echo "//registry.npmjs.org/:_authToken=$token" > $HOME/.npmrc
-        npm publish --otp=$(./neckless kv ls --onlyValue "NPM_TOTP@Totp()")
+        npm publish --otp=$(neckless kv ls --onlyValue "NPM_TOTP@Totp()")
 
     - name: Publish C5-Envelope PYTHON
       env:
         NECKLESS_PRIVKEY: ${{ secrets.NECKLESS_PRIVKEY }}
       run: |
         rm -rf ./dist
-        eval $(./neckless kv  ls  --shKeyValue --ghAddMask TWINE_PASSWORD)
+        eval $(neckless kv  ls  --shKeyValue --ghAddMask TWINE_PASSWORD)
         npm run generate-python
         python3 -m src.simple_envelope_test
         python3 -m pip install --upgrade build
