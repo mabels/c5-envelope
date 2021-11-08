@@ -1,6 +1,6 @@
 {
   "name": "c5-envelope",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "C5-ENVELOPE Repository",
   "main": "./dist/src/index.js",
   "scripts": {
