@@ -59,6 +59,7 @@ jobs:
         NECKLESS_PRIVKEY: ${{ secrets.NECKLESS_PRIVKEY }}
       run: |
         eval $(./neckless kv  ls  --shKeyValue --ghAddMask TWINE_PASSWORD")
+        npm run generate-python
         python3 -m src.simple_envelope_test
         python3 -m build
         pip3 install twine
