@@ -31,13 +31,17 @@ jobs:
       with:
           node-version: ${{ matrix.node-version }}
 
-    - name: Build Envelope
+    - name: Build JS Envelope
       run: |
         npm ci
         npm install
         npm run build
         npm run test
         npm pack
-        PYTHON_PATH=. python3 src/simple_envelope_test.py
+
+    - name: Build PYTHON Envelope
+      run: |
+        npm install generate-python
+        python3 -m src.simple_envelope_test
         python3 -m build
 
