@@ -13,13 +13,13 @@ def read(fname):
 
 
 def write_init(version: str):
-  with open("./lang/python/version.py", "w") as init_file:
+  with open("./src/lang/python/version.py", "w") as init_file:
     print("__version__ = '{version}'".format(version=version), file=init_file)
-  with open("./lang/python/__init__.py", "w") as init_file:
+  with open("./src/__init__.py", "w") as init_file:
     print("# generated", file=init_file)
-    print("from .envelope import *", file=init_file)
+    print("from .lang.python.envelope import *", file=init_file)
     print("from .simple_envelope import *", file=init_file)
-    print("from .version import __version__", file=init_file)
+    print("from .lang.python.version import __version__", file=init_file)
     print("if __name__ == '__main__':", file=init_file)
     print(" print('ready to format a c5 envelope')", file=init_file)
 
@@ -46,18 +46,24 @@ if Path("./package.json").is_file():
 if sys.argv[0] == 'setup.py' and sys.argv[1] == 'sdist':
     version = json.loads(read('package.json'))['version']
     write_init(version)
-    copyfile('./src/simple_envelope.py', './lang/python/simple_envelope.py')
-    copyfile('./package.json', './lang/python/package.json')
+    #copyfile('./src/simple_envelope.py', './lang/python/simple_envelope.py')
+    #copyfile('./package.json', './lang/python/package.json')
     #main_ns['__version__'] = version
+
+
+import subprocess
+subprocess.run(["ls", "-l"])
+
+lang_python_init = Path("./src/lang/python/version.py")
+if lang_python_init.is_file():
+    with open(lang_python_init) as ver_file:
+      c = ver_file.read()
+      exec(c, main_ns)
 
 lang_python_init = Path("./lang/python/version.py")
 if lang_python_init.is_file():
-    #dir = os.path.join(os.getcwd(), os.path.dirname(lang_python_init))
-    #print(dir)
-    #sys.path.append(dir)
     with open(lang_python_init) as ver_file:
       c = ver_file.read()
-      #print(c)
       exec(c, main_ns)
 
 #install.run(self)
@@ -76,11 +82,12 @@ setuptools.setup(
   cmdclass={
 #        'install': PreInstallCommand,
   },
-  # packages=setuptools.find_packages(),
-  packages=['c5_envelope'],
+  packages=['c5_envelope', 'c5_envelope.lang.python'],
   package_dir={
-      'c5_envelope': 'lang/python'
+      'c5_envelope': 'src', 
+      'c5_envelope.lang.python': 'src/lang/python'
   },
+
   description="C5-ENVELOPE Repository",
   long_description=read('README.md'),
   long_description_content_type="text/markdown",

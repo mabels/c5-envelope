@@ -3,9 +3,9 @@ from datetime import datetime
 import unittest
 import json
 
-from lang.python.envelope import EnvelopeT, PayloadT
+from .lang.python.envelope import EnvelopeT, PayloadT
 
-from src.simple_envelope import SimpleEnvelope, create_sha256, simple_envelope
+from .simple_envelope import SimpleEnvelope, create_sha256, simple_envelope
 
 # beforeAll(() => {
 #   // Lock Time

@@ -6,11 +6,11 @@
   "scripts": {
     "build": "npm run generate-ts; npm run compile; npm run generate-jschema; npm run generate-python; npm run generate-csharp; npm run generate-java",
     "compile": "tsc",
-    "generate-ts": "mkdir -p lang/ts && cd schema && quicktype --lang typescript -s typscript ./envelope.ts ./payload.ts -o ../lang/ts/envelope.ts; tsc ../lang/ts/envelope.ts",
-    "generate-jschema": "mkdir -p lang/jschema && cd schema && quicktype --lang schema -s typescript ./envelope.ts ./payload.ts -o ../lang/jschema/envelope.json",
-    "generate-python": "mkdir -p lang/python && cd schema && quicktype --lang python -s python ./envelope.ts ./payload.ts -o ../lang/python/envelope.py",
-    "generate-csharp": "mkdir -p lang/csharp && cd schema && quicktype --lang csharp -s csharp ./envelope.ts ./payload.ts -o ../lang/csharp/envelope.cs",
-    "generate-java": "mkdir -p lang/java && cd schema && quicktype --lang java -s java ./envelope.ts ./payload.ts -o ../lang/java/envelope.java",
+    "generate-ts": "mkdir -p src/lang/ts && cd schema && quicktype --lang typescript -s typscript ./envelope.ts ./payload.ts -o ../src/lang/ts/envelope.ts; tsc ../src/lang/ts/envelope.ts",
+    "generate-jschema": "mkdir -p src/lang/jschema && cd schema && quicktype --lang schema -s typescript ./envelope.ts ./payload.ts -o ../src/lang/jschema/envelope.json",
+    "generate-python": "mkdir -p src/lang/python && cd schema && quicktype --lang python -s python ./envelope.ts ./payload.ts -o ../src/lang/python/envelope.py",
+    "generate-csharp": "mkdir -p src/lang/csharp && cd schema && quicktype --lang csharp -s csharp ./envelope.ts ./payload.ts -o ../src/lang/csharp/envelope.cs",
+    "generate-java": "mkdir -p src/lang/java && cd schema && quicktype --lang java -s java ./envelope.ts ./payload.ts -o ../src/lang/java/envelope.java",
     "test": "jest"
   },
   "homepage": "https://github.com/mabels/c5-envelope#readme",

@@ -1,7 +1,7 @@
 
 from dataclasses import dataclass
 from typing import List
-import c5_envelope as c5
+from .lang.python.envelope import *
 import json
 from datetime import datetime
 import hashlib
@@ -10,15 +10,14 @@ import hashlib
 @dataclass
 class SimpleEnvelope:
     src: str
-    data: c5.PayloadT
+    data: PayloadT
     id: str = None
     dst: List[str] = None
     t: datetime = None
     ttl: float = None
 
 
-
-def simple_envelope(env: SimpleEnvelope) -> c5.EnvelopeT:
+def simple_envelope(env: SimpleEnvelope) -> EnvelopeT:
     data = env.data.to_dict()
     hex = create_sha256(json.dumps(data))
     if env.t is None:
@@ -37,7 +36,7 @@ def simple_envelope(env: SimpleEnvelope) -> c5.EnvelopeT:
         ttl = 10
     else:
         ttl = env.dst
-    return c5.EnvelopeT.from_dict({
+    return EnvelopeT.from_dict({
         'v': 'A',
         'id': id,
         'src': env.src,
