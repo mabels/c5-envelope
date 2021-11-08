@@ -4,6 +4,10 @@
 # include the .d.ts files
 !*.d.ts
 
+*.py
+*.pyc
+*.egg-info
+
 .neckless
 .github/
 /lang
