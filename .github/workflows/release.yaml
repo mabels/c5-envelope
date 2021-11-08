@@ -33,12 +33,9 @@ jobs:
         npm run build
         npm run test
 
-    - name: Fetch Neckless
-      run: |
-        curl -L -o ./neckless https://github.com/mabels/neckless/releases/download/v0.1.3/default.neckless-linux-amd64
-        chmod 755 ./neckless
-        ls -l
-        ./neckless version
+    - uses: mabels/neckless@main
+      with:
+        version: v0.1.7
 
     - name: Publish C5-Envelope NPM
       env:
