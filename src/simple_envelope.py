@@ -20,7 +20,7 @@ class SimpleEnvelope:
 
 def simple_envelope(env: SimpleEnvelope) -> EnvelopeT:
     data = env.data.to_dict()
-    hex = create_sha256(json.dumps(data))
+    hex = create_sha256(json.dumps(data, sort_keys=True))
     if env.t is None:
         date = datetime.now()
     else:
@@ -52,3 +52,8 @@ def create_sha256(message: str) -> str:
     h = hashlib.new('sha256')
     h.update(bytearray(message.encode('utf-8')))
     return h.hexdigest()
+
+
+def serialize_sorted(message: EnvelopeT, multiline=False) -> str:
+    indent = 2 if multiline else None
+    return json.dumps(message.to_dict(), sort_keys=True, indent=indent)
