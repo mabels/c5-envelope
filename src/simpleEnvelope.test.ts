@@ -45,7 +45,7 @@ it('test simple envelope', () => {
     t,
     ttl: 10,
   };
-  expect(t).toEqual(1624140000000);
+  expect(`${t}`).toEqual(expect.stringMatching(/^[0-9]+/));
 
   expect(expected.id).toEqual(`${t}-${hashIt(sortKeys(data))}`);
   expect(simpleEnvelope(env)).toEqual(expected);
