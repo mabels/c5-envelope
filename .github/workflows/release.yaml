@@ -26,13 +26,6 @@ jobs:
       with:
           node-version: ${{ matrix.node-version }}
 
-    - name: Build C5-Envelope
-      run: |
-        npm ci
-        npm install
-        npm run build
-        npm run test
-
     - uses: mabels/neckless@main
       with:
         version: v0.1.7
@@ -50,6 +43,10 @@ jobs:
              -d "{\"name\":\"$NPM_USER\", \"password\": \"$NPM_PASS\"}" \
              https://registry.npmjs.org/-/user/org.couchdb.user:$NPM_USER | jq -r .token)
         echo "//registry.npmjs.org/:_authToken=$token" > $HOME/.npmrc
+        npm ci
+        npm install
+        npm run build
+        npm run test
         npm publish --otp=$(neckless kv ls --onlyValue "NPM_TOTP@Totp()")
 
     - name: Publish C5-Envelope PYTHON
