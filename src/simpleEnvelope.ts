@@ -1,59 +1,25 @@
 import { Envelope } from "../schema/envelope";
 import { Payload } from "../schema/payload";
 import * as crypto from "crypto";
-import baseX from 'base-x';
+import baseX from "base-x";
 
-const bs58 = baseX('123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz')
+const bs58 = baseX(
+  "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+);
 
-export interface SimpleEnvelope<T = unknown> {
+interface JsonProps {
+  readonly indent: number;
+  readonly newLine: string;
+}
+
+export interface SimpleEnvelopeProps<T = unknown> {
   readonly id?: string;
   readonly src: string;
   readonly dst?: string[];
   readonly t?: Date;
   readonly ttl?: number; //Limit the hop count
   readonly data: Payload<T>;
-}
-
-interface KeyValue {
-  readonly key?: string;
-  readonly val?: string;
-}
-
-export class ObjCollector {
-  public result: any = undefined;
-  public current: any[] = [];
-  public assign_val(stack: any[], kv: KeyValue) {
-    const last = this.current[this.current.length - 1];
-    if (Array.isArray(last)) {
-      last.push(kv.val);
-    } else if (typeof last == "object") {
-    } else {
-    }
-  }
-  public append(sval: SVal) {
-    if (sval.outState) {
-      switch (sval.outState) {
-        case OutState.ARRAY_START:
-          this.current.push([]);
-          break;
-
-        case OutState.OBJECT_START:
-          this.current.push({});
-          break;
-
-        case OutState.OBJECT_END:
-        case OutState.ARRAY_END:
-          this.current.pop();
-          break;
-      }
-    }
-    if (sval.val) {
-      // assign_val(this.current, sval.val);
-    }
-    if (sval.attribute) {
-      // this.assign_val(this.current, )
-    }
-  }
+  readonly jsonProp?: Partial<JsonProps>;
 }
 
 type OutputFn = (str: string) => void;
@@ -63,19 +29,22 @@ export class JsonCollector {
   readonly indent: string;
   readonly commas: string[] = [""];
   readonly elements: number[] = [0];
+  readonly props: { indent: number; newLine: string };
   readonly nextLine: string;
   attribute?: string;
-  // state: OutState = OutState.NONE;
-  // suffix: string = "";
 
-  constructor(output: OutputFn, indent: number = 0) {
+  constructor(output: OutputFn, props: Partial<JsonProps> = {}) {
     this.output = output;
-    this.indent = Array(indent).fill(" ").join("");
-    this.nextLine = indent ? "\n" : "";
+    this.props = {
+      indent: props.indent || 0,
+      newLine: props.newLine || "\n",
+      ...props,
+    };
+    this.indent = Array(this.props.indent).fill(" ").join("");
+    this.nextLine = this.props.indent ? this.props.newLine : "";
   }
 
   public get suffix(): string {
-    // console.log(">", this.elements);
     if (this.elements[this.elements.length - 1]) {
       return (
         this.nextLine +
@@ -89,7 +58,6 @@ export class JsonCollector {
   }
 
   public append(sval: SVal) {
-    // console.log(JSON.stringify(sval))
     if (sval.outState) {
       switch (sval.outState) {
         case OutState.ARRAY_START:
@@ -102,7 +70,6 @@ export class JsonCollector {
           this.attribute = undefined;
           this.commas[this.commas.length - 1] = ",";
           this.commas.push("");
-          // this.suffix = this.nextLine + Array(this.commas.length - 1).fill(this.indent).join("");
           this.elements.push(0);
           break;
 
@@ -110,7 +77,6 @@ export class JsonCollector {
           this.commas.pop();
           this.output(this.suffix + "]");
           this.elements.pop();
-          // this.suffix = (this.elements[this.elements.length - 1] ? this.nextLine : "") + Array(this.commas.length - 1).fill(this.indent).join("");
           break;
 
         case OutState.OBJECT_START:
@@ -123,7 +89,6 @@ export class JsonCollector {
           this.attribute = undefined;
           this.commas[this.commas.length - 1] = ",";
           this.commas.push("");
-          // this.suffix = this.nextLine + Array(this.commas.length - 1).fill(this.indent).join("");
           this.elements.push(0);
           break;
 
@@ -131,21 +96,19 @@ export class JsonCollector {
           this.commas.pop();
           this.output(this.suffix + "}");
           this.elements.pop();
-          // this.suffix = (this.elements[this.elements.length - 1] ? this.nextLine : "") + Array(this.commas.length - 1).fill(this.indent).join("");
           break;
       }
     }
     if (sval.val) {
-      // console.log(`COMMA=${this.commas}=SUFFIX=${JSON.stringify(this.suffix)}`)
       ++this.elements[this.elements.length - 1];
-      this.output(
+      const out =
         this.commas[this.commas.length - 1] +
-          this.suffix +
-          (this.attribute || "") +
-          JSON.stringify(sval.val)
-      );
+        this.suffix +
+        (this.attribute || "") +
+        sval.val.toString();
+      // console.log(this.commas, this.attribute, sval.val, out);
+      this.output(out);
       this.attribute = undefined;
-      // this.suffix = (this.elements[this.elements.length - 1] ? this.nextLine : "") + Array(this.commas.length - 1).fill(this.indent).join("");
       this.commas[this.commas.length - 1] = ",";
       // }
     }
@@ -153,18 +116,14 @@ export class JsonCollector {
       ++this.elements[this.elements.length - 1];
       this.attribute =
         JSON.stringify(sval.attribute) + ":" + (this.indent.length ? " " : "");
-      // this.output(this.commas[this.commas.length -1]  + this.suffix + JSON.stringify(sval.attribute)  + ":" + (this.indent.length ? " " : ""));
-      // this.isAttributes.push(",");
     }
   }
 }
 
-
 export class HashCollector {
   readonly hash: crypto.Hash = crypto.createHash("sha256");
 
-  constructor() {
-  }
+  constructor() {}
 
   public digest() {
     return bs58.encode(this.hash.digest());
@@ -174,39 +133,141 @@ export class HashCollector {
     if (sval.outState) {
       return;
     }
+    if (sval.attribute) {
+      this.hash.update(Buffer.from(sval.attribute, "utf-8"));
+    }
     if (sval.val) {
-      let out: string;
-      if (sval.val instanceof Date) {
-        out = sval.val.toISOString();
+      let out: any = sval.val.asValue();
+      if (out instanceof Date) {
+        out = out.toISOString()
       } else {
-        out = "" + sval.val;
+        out = "" + out;
       }
       // We need some room for the types
       this.hash.update(Buffer.from(out, "utf-8"));
-    } 
-    if (sval.attribute) {
-      this.hash.update(Buffer.from(sval.attribute, "utf-8"));
     }
   }
 }
 
-export function simpleEnvelope<T>(env: SimpleEnvelope<T>): Envelope<T> {
-  // sortKeys(env.data);
-  // const date = env.t || new Date();
-  // const en: Envelope<T> = sortKeys({
-  //   v: 'A',
-  //   id: env.id || `${date.getTime()}-${hashIt(data)}`,
-  //   src: env.src,
-  //   dst: env.dst || [],
-  //   t: date.getTime(),
-  //   ttl: env.ttl || 10,
-  //   data: { data: undefined as unknown as T, kind: 'dummy' },
-  // });
-  // // omit data double sort
-  // (en as { data: { data: T; kind: string } }).data = data;
+export interface JsonHash {
+  readonly jsonStr: string;
+  readonly hash?: string;
+}
 
-  // return en;
-  throw Error("not ready simpleEnvelope");
+export class SimpleEnvelope<T> {
+  readonly simpleEnvelopeProps: SimpleEnvelopeProps<T>;
+  readonly envJsonStrings: string[] = [];
+  readonly envJsonC: JsonCollector;
+  public envelope?: Envelope<T>;
+  public dataJsonHash?: JsonHash;
+
+  constructor(env: SimpleEnvelopeProps<T>) {
+    this.simpleEnvelopeProps = env;
+    this.envJsonC = new JsonCollector(
+      (part) => this.envJsonStrings.push(part),
+      this.simpleEnvelopeProps.jsonProp
+    );
+  }
+
+  public asDataJson(): string {
+    return this.dataJsonHash!.jsonStr;
+  }
+
+  public asJson(): string {
+    const str = this.lazy().envJsonStrings.join("");
+    // Caution
+    this.asJson = () => str;
+    return str;
+  }
+
+  public asEnvelope(): Envelope<T> {
+    // Caution
+    this.asEnvelope = () => this.envelope!;
+    return this.lazy().envelope!;
+  }
+
+  private toDataJson(): JsonHash {
+    const dataJsonStrings: string[] = [];
+    const dataJsonC = new JsonCollector((part) => dataJsonStrings.push(part), {
+      ...this.simpleEnvelopeProps.jsonProp,
+      // "data": { "data": { this stuff } } ==> 2
+      newLine:
+        "\n" +
+        Array(2 * ((this.simpleEnvelopeProps.jsonProp || {}).indent || 0))
+          .fill(" ")
+          .join(""),
+    });
+    let dataHashC: HashCollector = undefined as unknown as HashCollector;
+    let dataProcessor: SValFn;
+    if (this.simpleEnvelopeProps.id) {
+      dataProcessor = (sval) => {
+        dataJsonC.append(sval);
+      };
+    } else {
+      dataHashC = new HashCollector();
+      dataProcessor = (sval: SVal) => {
+        console.log("dataP:", sval);
+        dataHashC.append(sval);
+        dataJsonC.append(sval);
+      };
+    }
+    sortKeys(this.simpleEnvelopeProps.data.data, dataProcessor);
+    return {
+      jsonStr: dataJsonStrings.join(""),
+      hash: dataHashC ? dataHashC.digest() : undefined,
+    };
+  }
+
+  public lazy() {
+    this.dataJsonHash = this.toDataJson();
+    const date = this.simpleEnvelopeProps.t || new Date();
+    const envelope: Envelope<T> = {
+      v: "A",
+      id:
+        this.simpleEnvelopeProps.id ||
+        `${date.getTime()}-${this.dataJsonHash.hash}`,
+      src: this.simpleEnvelopeProps.src,
+      dst: this.simpleEnvelopeProps.dst || [],
+      t: date.getTime(),
+      ttl: this.simpleEnvelopeProps.ttl || 10,
+      data: {
+        ...this.simpleEnvelopeProps.data,
+        data: undefined as unknown as T,
+      },
+    };
+    let nextValue = false;
+    sortKeys(envelope, (sval) => {
+      let oval = sval;
+      if (sval.attribute === "data") {
+        nextValue = true;
+      } else if (nextValue) {
+        if (sval.val && sval.val.asValue() === undefined) {
+          oval = {
+            ...sval,
+            val: new PlainValType(this.asDataJson()),
+          };
+        }
+        nextValue = false;
+      }
+      this.envJsonC.append(oval);
+    });
+    this.envelope = {
+      ...envelope,
+      data: {
+        ...envelope.data,
+        data: envelope.data.data,
+      },
+    };
+    // Caution
+    this.lazy = () => this;
+    return this;
+  }
+}
+
+export function simpleEnvelope<T>(
+  env: SimpleEnvelopeProps<T>
+): SimpleEnvelope<T> {
+  return new SimpleEnvelope(env);
 }
 
 export function lexicalSort(a: number | string, b: number | string): number {
@@ -219,7 +280,44 @@ export function lexicalSort(a: number | string, b: number | string): number {
   return 0;
 }
 
-type ValType = string | number | boolean | Date;
+type ValueType = string | number | boolean | Date | undefined;
+
+interface ValType {
+  toString(): string;
+  asValue(): any;
+}
+
+class JsonValType implements ValType {
+  readonly val: ValueType;
+
+  constructor(val: ValueType) {
+    this.val = val;
+  }
+
+  public asValue() {
+    return this.val;
+  }
+
+  public toString() {
+    return JSON.stringify(this.val);
+  }
+}
+
+class PlainValType implements ValType {
+  readonly val: string;
+
+  constructor(val: string) {
+    this.val = val;
+  }
+
+  public asValue() {
+    return this.val;
+  }
+
+  public toString() {
+    return this.val;
+  }
+}
 
 enum OutState {
   NONE = "NE",
@@ -231,13 +329,13 @@ enum OutState {
 
 interface SVal {
   readonly attribute?: string;
-  attributeStr?: string;
   readonly val?: ValType;
-  valStr?: string;
   readonly outState?: OutState;
 }
 
-export function sortKeys<T>(e: T, out: (prob: SVal) => void): void {
+type SValFn = (prob: SVal) => void;
+
+export function sortKeys<T>(e: T, out: SValFn): void {
   if (Array.isArray(e)) {
     out({ outState: OutState.ARRAY_START });
     e.forEach((i) => {
@@ -256,42 +354,7 @@ export function sortKeys<T>(e: T, out: (prob: SVal) => void): void {
     out({ outState: OutState.OBJECT_END });
     return;
   } else {
-    out({ val: e as unknown as ValType });
+    out({ val: new JsonValType(e as unknown as ValueType) });
     return;
   }
-}
-
-function hashUpdate<T>(e: T, hash: crypto.Hash): T {
-  if (Array.isArray(e)) {
-    return e.reduce((r, i) => {
-      r.push(hashUpdate(i, hash));
-      return r;
-    }, []);
-  } else if (typeof e === "object") {
-    return Object.keys(e).reduce((r: Record<string, unknown>, i) => {
-      hash.update(i);
-      r[i] = hashUpdate((e as any)[i], hash);
-      return r;
-    }, {}) as T;
-  } else {
-    hash.update("" + e);
-    return e;
-  }
-}
-
-export function hashIt<T>(
-  e: T,
-  hash: crypto.Hash = crypto.createHash("sha256")
-): string {
-  hashUpdate(e, hash);
-  return hash.digest("hex");
-}
-
-export function serializeSorted(
-  message: Envelope,
-  opts?: { multiline: boolean }
-): string {
-  // let input = sortKeys(message);
-  // return (opts?.multiline) ? JSON.stringify(input, null, 2) : JSON.stringify(input);
-  throw Error("not ready");
 }
