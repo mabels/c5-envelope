@@ -301,6 +301,18 @@ it('HashCollector 3', () => {
   expect(hash.digest()).toBe('5ktWSQ4GuCoHHScpfcNEsckY6YRzZoe2c6WTzmZPYiq8');
 });
 
+it('HashCollector 3 internal update', () => {
+  const hashCollector = new HashCollector();
+  hashCollector.hash.update = jest.fn()
+  sortKeys({ x: { x: 1, z: "x" }, y: {}, z: [], date: new Date(444) }, (o) => hashCollector.append(o));
+  const result = ((hashCollector.hash.update as jest.Mock).mock.calls)
+      .reduce((acc: string[], elem: Buffer[]) => {
+        elem.map((s: Buffer) => acc.push(s.toString()));
+        return acc;
+      }, []);
+  expect(result).toEqual(["date", "1970-01-01T00:00:00.444Z", "x", "x", "1", "z", "x", "y", "z"]);
+});
+
 afterAll(() => {
   // Unlock Time
   jest.useRealTimers();
