@@ -29,7 +29,7 @@ export class JsonCollector {
   readonly indent: string;
   readonly commas: string[] = [""];
   readonly elements: number[] = [0];
-  readonly props: { indent: number; newLine: string };
+  readonly props: JsonProps;
   readonly nextLine: string;
   attribute?: string;
 
@@ -134,7 +134,9 @@ export class HashCollector {
       return;
     }
     if (sval.attribute) {
-      this.hash.update(Buffer.from(sval.attribute, "utf-8"));
+      const tmp = Buffer.from(sval.attribute).toString('utf-8')
+      console.log('attribute=', tmp)
+      this.hash.update(tmp);
     }
     if (sval.val) {
       let out: any = sval.val.asValue();
@@ -143,8 +145,9 @@ export class HashCollector {
       } else {
         out = "" + out;
       }
+      console.log('val=', out)
       // We need some room for the types
-      this.hash.update(Buffer.from(out, "utf-8"));
+      this.hash.update(Buffer.from(out).toString("utf-8"));
     }
   }
 }

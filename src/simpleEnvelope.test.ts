@@ -302,7 +302,7 @@ it("JSONCollector [1, new Date(444)]", () => {
   });
   const obj = [1, new Date(444)];
   sortKeys(obj, (o) => json.append(o));
-  expect(JSON.stringify(obj)).toBe(out);
+  expect("[1,\"1970-01-01T00:00:00.444Z\"]").toBe(out);
 });
 
 it("HashCollector 1", () => {
