@@ -51,7 +51,6 @@ jobs:
         npm init -y -f
         npm install ../c5-envelope-0.0.0-smoke.tgz 
         npm install ts-node --global
-        find . -type f
         ts-node smoke.ts
 
     - uses: actions/setup-python@v2
