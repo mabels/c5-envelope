@@ -344,11 +344,7 @@ it('HashCollector 3 internal update', () => {
   const hashCollector = new HashCollector();
   hashCollector.hash.update = jest.fn()
   sortKeys({ x: { r: 1, z: "u" }, y: {}, z: [], date: new Date(444) }, (o) => hashCollector.append(o));
-  const result = ((hashCollector.hash.update as jest.Mock).mock.calls)
-      .reduce((acc: string[], [elem]: Buffer[]) => {
-        acc.push(elem.toString());
-        return acc;
-      }, []);
+  const result = ((hashCollector.hash.update as jest.Mock).mock.calls).map(([elem]: Buffer[]) => elem.toString());
   expect(result).toEqual(["date", "1970-01-01T00:00:00.444Z", "x", "r", "1", "z", "u", "y", "z"]);
   expect(hashCollector.digest()).toBe("GKot5hBsd81kMupNCXHaqbhv3huEbxAFMLnpcX2hniwn")
 });
