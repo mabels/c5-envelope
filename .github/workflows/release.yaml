@@ -7,7 +7,7 @@ on:
   push:
     # Sequence of patterns matched against refs/tags
     tags:
-      - 'release'
+      - 'v*'
 
 jobs:
   build:
@@ -34,6 +34,7 @@ jobs:
       env:
         NECKLESS_PRIVKEY: ${{ secrets.NECKLESS_PRIVKEY }}
       run: |
+        echo "GITHUB_REF:" $GITHUB_REF
         rm -rf ./dist
         eval $(neckless kv ls --shKeyValue --ghAddMask NPM_PASS  NPM_USER "NPM_TOTP@Totp()")
         # env | sort | grep NPM
