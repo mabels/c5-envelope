@@ -31,10 +31,14 @@ jobs:
       with:
           node-version: ${{ matrix.node-version }}
 
+    - name: Patch Version ${{ env.GITHUB_REF }}
+      run: |
+       node patch-package.json.js "$GITHUB_REF"
+       git diff
+
     - name: Build JS Envelope
       run: |
-        node patch.js $GITHUB_REF > package.json
-        git diff
+        rm -rf ./dist
         npm ci
         npm install
         npm run build
@@ -48,6 +52,7 @@ jobs:
 
     - name: Build PYTHON Envelope
       run: |
+        rm -rf ./dist
         npm run generate-python
         python3 --version
         python3 -m pip install --upgrade -r requirements.txt

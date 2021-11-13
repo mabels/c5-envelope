@@ -32,7 +32,7 @@ jobs:
 
     - name: Patch Version ${{ env.GITHUB_REF }}
       run: |
-       node patch.js "$GITHUB_REF" > package.json
+       node patch-package.json.js "$GITHUB_REF"
        git diff
 
     - name: Publish C5-Envelope NPM
