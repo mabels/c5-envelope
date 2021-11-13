@@ -48,8 +48,8 @@ jobs:
     - name: Smoke JS
       run: |
         cd smoke
-        npm install ../c5-envelope-0.0.0-smoke.tgz --no-save
-        npm install ts-node --no-save
+        npm install ../c5-envelope-0.0.0-smoke.tgz --global
+        npm install ts-node --global
         ts-node smoke.ts
 
     - uses: actions/setup-python@v2
