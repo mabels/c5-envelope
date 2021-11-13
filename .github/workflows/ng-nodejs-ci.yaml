@@ -42,6 +42,10 @@ jobs:
     - name: Build PYTHON Envelope
       run: |
         npm run generate-python
+        pyenv versions
+        pyenv install 3.9.7
+        pyenv local 3.9.7
+        python3 --version
         python3 -m pip install --upgrade -r requirements.txt
         python3 -m src.simple_envelope_test
         python3 -m build
