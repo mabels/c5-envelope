@@ -7,8 +7,7 @@ import {
   SimpleEnvelope,
 } from "./simpleEnvelope";
 import { Envelope } from "../schema/envelope";
-import { assert } from "console";
-import exp from "constants";
+import { Convert, PayloadT } from "./lang/ts/envelope";
 
 beforeAll(() => {
   // Lock Time
@@ -353,6 +352,19 @@ it('HashCollector 3 internal update', () => {
   expect(result).toEqual(["date", "1970-01-01T00:00:00.444Z", "x", "r", "1", "z", "u", "y", "z"]);
   expect(hashCollector.digest()).toBe("GKot5hBsd81kMupNCXHaqbhv3huEbxAFMLnpcX2hniwn")
 });
+
+it('missing data in envelope', () => {
+  const payt: PayloadT = Convert.toPayload(JSON.stringify({
+    kind: 'kind',
+    data: { y: 4 }
+  }))
+  const message: SimpleEnvelopeProps = {
+    src: "test case",
+    data: payt
+  };
+  const ref = Convert.toEnvelope(simpleEnvelope(message).asJson());
+  expect(simpleEnvelope(ref).asEnvelope().data).toEqual(message.data)
+})
 
 afterAll(() => {
   // Unlock Time

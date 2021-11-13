@@ -33,7 +33,7 @@ jobs:
 
     - name: Patch Version ${{ env.GITHUB_REF }}
       run: |
-       node patch-package.json.js "$GITHUB_REF"
+       node patch-package.json.js "origin/head/0.0.0-smoke"
        git diff
 
     - name: Build JS Envelope
@@ -44,6 +44,13 @@ jobs:
         npm run build
         npm run test
         npm pack
+
+    - name: Smoke JS
+      run: |
+        cd smoke
+        npm install ../c5-envelope-0.0.0-smoke.tgz --no-save
+        npm install ts-node --no-save
+        node smoke.ts
 
     - uses: actions/setup-python@v2
       with:
@@ -59,3 +66,9 @@ jobs:
         python3 -m src.simple_envelope_test
         python3 -m build
 
+    - name: Smoke Python
+      run: |
+        cd smoke
+        python3 -m venv .
+        bin/pip3 install ../dist/c5_envelope-0.0.0.smoke0-py3-none-any.whl
+        bin/python3 smoke.ts

@@ -7,7 +7,7 @@ const bs58 = baseX(
   "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 );
 
-interface JsonProps {
+export interface JsonProps {
   readonly indent: number;
   readonly newLine: string;
 }
@@ -16,7 +16,7 @@ export interface SimpleEnvelopeProps<T = unknown> {
   readonly id?: string;
   readonly src: string;
   readonly dst?: string[];
-  readonly t?: Date;
+  readonly t?: Date | number;
   readonly ttl?: number; //Limit the hop count
   readonly data: Payload<T>;
   readonly jsonProp?: Partial<JsonProps>;
@@ -135,7 +135,7 @@ export class HashCollector {
     }
     if (sval.attribute) {
       const tmp = Buffer.from(sval.attribute).toString('utf-8')
-      console.log('attribute=', tmp)
+      // console.log('attribute=', tmp)
       this.hash.update(tmp);
     }
     if (sval.val) {
@@ -145,7 +145,7 @@ export class HashCollector {
       } else {
         out = "" + out;
       }
-      console.log('val=', out)
+      // console.log('val=', out)
       // We need some room for the types
       this.hash.update(Buffer.from(out).toString("utf-8"));
     }
@@ -209,7 +209,7 @@ export class SimpleEnvelope<T> {
     } else {
       dataHashC = new HashCollector();
       dataProcessor = (sval: SVal) => {
-        console.log("dataP:", sval);
+        // console.log("dataP:", sval);
         dataHashC.append(sval);
         dataJsonC.append(sval);
       };
@@ -223,15 +223,20 @@ export class SimpleEnvelope<T> {
 
   public lazy() {
     this.dataJsonHash = this.toDataJson();
-    const date = this.simpleEnvelopeProps.t || new Date();
+    let t: number;
+    if (this.simpleEnvelopeProps.t instanceof Date) {
+      t = this.simpleEnvelopeProps.t.getTime();
+    } else {
+      t = this.simpleEnvelopeProps.t || (new Date()).getTime();
+    }
     const envelope: Envelope<T> = {
       v: "A",
       id:
         this.simpleEnvelopeProps.id ||
-        `${date.getTime()}-${this.dataJsonHash.hash}`,
+        `${t}-${this.dataJsonHash.hash}`,
       src: this.simpleEnvelopeProps.src,
       dst: this.simpleEnvelopeProps.dst || [],
-      t: date.getTime(),
+      t: t,
       ttl: this.simpleEnvelopeProps.ttl || 10,
       data: {
         ...this.simpleEnvelopeProps.data,
@@ -258,7 +263,7 @@ export class SimpleEnvelope<T> {
       ...envelope,
       data: {
         ...envelope.data,
-        data: envelope.data.data,
+        data: this.simpleEnvelopeProps.data.data
       },
     };
     // Caution

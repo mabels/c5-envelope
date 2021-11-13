@@ -31,8 +31,11 @@ class SimpleEnvelopeProps:
     jsonProp: JsonProps
     datetime: datetime
 
-    def __init__(self, src, data, id = None, dst = [], t = None, ttl = 10, jsonProp = JsonProps(), datetime = datetime) -> None:
-        self.data = data
+    def __init__(self, src, data, id = None, dst = [], t = None, ttl = 10, jsonProp = JsonProps(), datetime = datetime, v = None) -> None:
+        if isinstance(data, PayloadT):
+            self.data = data
+        else:
+            self.data = PayloadT.from_dict(data)
         self.src = src
         self.id = id
         self.dst = dst
@@ -274,7 +277,7 @@ class SimpleEnvelope:
     def __init__(self, env: SimpleEnvelopeProps):
         self.envJsonStrings = []
         self.simpleEnvelopeProps = env
-        self.simpleEnvelopeProps.jsonProp = JsonProps() if self.simpleEnvelopeProps.jsonProp is None else self.simpleEnvelopeProps.jsonProp
+        # self.simpleEnvelopeProps.jsonProp = JsonProps() if self.simpleEnvelopeProps.jsonProp is None else self.simpleEnvelopeProps.jsonProp
         # print(this.simpleEnvelopeProps.jsonProp)
         self.envJsonC = JsonCollector(
             lambda part: self.envJsonStrings.append(part),
@@ -322,14 +325,21 @@ class SimpleEnvelope:
 
     def lazy(self):
         self.dataJsonHash = self.toDataJson()
-        date = self.simpleEnvelopeProps.t if self.simpleEnvelopeProps.t is not None else self.datetime.now()
-        # print(">>>>>>", date)
+        t = 0
+        if isinstance(self.simpleEnvelopeProps.t, datetime):
+            date = self.simpleEnvelopeProps.t if self.simpleEnvelopeProps.t is not None else self.datetime.now()
+            t = int(date.timestamp()*1000)
+        elif isinstance(self.simpleEnvelopeProps.t, float) or isinstance(self.simpleEnvelopeProps.t, int):
+            t = self.simpleEnvelopeProps.t
+        else:
+            t = int(self.datetime.now().timestamp()*1000)
+        # print(">>>>>>", self.simpleEnvelopeProps.t.__class__)
         envelope: EnvelopeT = EnvelopeT.from_dict({
             'v': "A",
-            'id': self.simpleEnvelopeProps.id if self.simpleEnvelopeProps.id is not None else f'{math.ceil(date.timestamp() * 1000)}-{self.dataJsonHash.hash}',
+            'id': self.simpleEnvelopeProps.id if self.simpleEnvelopeProps.id is not None else f'{t}-{self.dataJsonHash.hash}',
             'src': self.simpleEnvelopeProps.src,
             'dst': self.simpleEnvelopeProps.dst if self.simpleEnvelopeProps.dst is not None else [],
-            't': int(date.timestamp()*1000), #+math.ceil((float(date.timestamp())-int(date.timestamp()))*10000),
+            't': t,
             'ttl': self.simpleEnvelopeProps.ttl if self.simpleEnvelopeProps.ttl is not None else 10,
             'data': PayloadT.from_dict({
                 'kind': self.simpleEnvelopeProps.data.kind,

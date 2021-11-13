@@ -4,7 +4,7 @@ import json
 import unittest
 import unittest.mock
 
-from .lang.python.envelope import PayloadT
+from .lang.python.envelope import EnvelopeT, PayloadT
 
 from .simple_envelope import HashCollector, JsonCollector, JsonProps, SimpleEnvelopeProps, simpleEnvelope, sortKeys
 
@@ -311,6 +311,18 @@ class SimpleEnvelopeTest(unittest.TestCase):
             ["date", "1970-01-01T00:00:00.444Z", "x", "r", "1", "z", "u", "y", "z"])
         self.assertEqual(hashCollector.digest(),
                          "CwEMjUHV6BpDS7AGBAYqjY6qMKE6xC8Z56H5T2ZuUuXe")
+
+    def test_missing_data_in_envelope(self):
+        payt: PayloadT = PayloadT.from_dict({
+            'kind': 'kind',
+            'data': { 'y': 4 }
+        })
+        message: SimpleEnvelopeProps = SimpleEnvelopeProps(**{
+            'src': "test case",
+            'data': payt
+        })
+        ref = EnvelopeT.from_dict(json.loads(simpleEnvelope(message).asJson()))
+        self.assertEqual(simpleEnvelope(SimpleEnvelopeProps(**ref.to_dict())).asEnvelope().data.to_dict(), payt.to_dict())
 
 
 if __name__ == '__main__':

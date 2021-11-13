@@ -1,6 +1,6 @@
 {
   "name": "c5-envelope",
-  "version": "3.3.5",
+  "version": "0.0.0-dev",
   "description": "C5-ENVELOPE Repository",
   "main": "./dist/src/index.js",
   "scripts": {
@@ -17,7 +17,6 @@
   "author": "Meno Abels",
   "license": "AFL-2.0",
   "dependencies": {
-    "@peculiar/webcrypto": "^1.1.7",
     "base-x": "^3.0.9"
   },
   "devDependencies": {

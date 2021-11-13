@@ -1,13 +1,28 @@
-import { Envelope } from '../schema/envelope';
-import { Payload } from '../schema/payload';
-import { simpleEnvelope } from './simpleEnvelope';
-import { Convert, EnvelopeT, PayloadT } from './lang/ts/envelope';
+import { Envelope } from "../schema/envelope";
+import { Payload } from "../schema/payload";
+import {
+  simpleEnvelope,
+  SimpleEnvelope,
+  SimpleEnvelopeProps,
+  JsonProps,
+  JsonCollector,
+  HashCollector,
+  JsonHash,
+} from "./simpleEnvelope";
+import { Convert, EnvelopeT, PayloadT, V } from "./lang/ts/envelope";
 
 export {
-    simpleEnvelope,
-    Envelope,
-    Payload,
-    EnvelopeT,
-    PayloadT,
-    Convert
+  simpleEnvelope,
+  SimpleEnvelope,
+  SimpleEnvelopeProps,
+  JsonProps,
+  JsonCollector,
+  HashCollector,
+  JsonHash,
+  Envelope,
+  Payload,
+  EnvelopeT,
+  PayloadT,
+  V,
+  Convert,
 };
