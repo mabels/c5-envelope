@@ -72,4 +72,4 @@ jobs:
         cd smoke
         python3 -m venv .
         bin/pip3 install ../dist/c5_envelope-0.0.0_smoke-py3-none-any.whl
-        bin/python3 smoke.ts
+        bin/python3 smoke.py
