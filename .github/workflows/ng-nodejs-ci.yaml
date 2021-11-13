@@ -50,7 +50,7 @@ jobs:
         cd smoke
         npm install ../c5-envelope-0.0.0-smoke.tgz --no-save
         npm install ts-node --no-save
-        node smoke.ts
+        ts-node smoke.ts
 
     - uses: actions/setup-python@v2
       with:
