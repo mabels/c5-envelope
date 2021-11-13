@@ -30,11 +30,15 @@ jobs:
       with:
         version: v0.1.7
 
+    - name: Patch Version ${{ env.GITHUB_REF }}
+      run: |
+       node patch.js "$GITHUB_REF" > package.json
+       git diff
+
     - name: Publish C5-Envelope NPM
       env:
         NECKLESS_PRIVKEY: ${{ secrets.NECKLESS_PRIVKEY }}
       run: |
-        echo "GITHUB_REF:" $GITHUB_REF
         rm -rf ./dist
         eval $(neckless kv ls --shKeyValue --ghAddMask NPM_PASS  NPM_USER "NPM_TOTP@Totp()")
         # env | sort | grep NPM

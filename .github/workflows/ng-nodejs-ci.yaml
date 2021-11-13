@@ -33,7 +33,8 @@ jobs:
 
     - name: Build JS Envelope
       run: |
-        echo "GITHUB_REF:" $GITHUB_REF
+        node patch.js $GITHUB_REF > package.json
+        git diff
         npm ci
         npm install
         npm run build
