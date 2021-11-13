@@ -42,7 +42,7 @@ jobs:
     - name: Build PYTHON Envelope
       run: |
         npm run generate-python
+        python3 -m pip install --upgrade -r requirements.txt
         python3 -m src.simple_envelope_test
-        python3 -m pip install --upgrade build
         python3 -m build
 

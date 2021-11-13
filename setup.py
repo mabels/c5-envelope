@@ -74,7 +74,9 @@ setuptools.setup(
   author='Meno Abels',
   author_email='meno.abels@adviser.com',
   setup_requires=[],
-  install_requires=[],
+  install_requires=[
+      'base58'
+  ],
   ext_modules=[],
   packages=['c5_envelope', 'c5_envelope.lang.python'],
   package_dir={

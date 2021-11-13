@@ -56,9 +56,8 @@ jobs:
         rm -rf ./dist
         eval $(neckless kv  ls  --shKeyValue --ghAddMask TWINE_PASSWORD)
         npm run generate-python
+        python3 -m pip install --upgrade -r requirements.txt
         python3 -m src.simple_envelope_test
-        python3 -m pip install --upgrade build
         python3 -m build
-        python3 -m pip  install twine
         python3 -m twine upload dist/* -u fastandfearless 
 
