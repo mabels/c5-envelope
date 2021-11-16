@@ -11,7 +11,8 @@
     "generate-python": "mkdir -p src/lang/python && cd schema && quicktype --lang python -s python ./envelope.ts ./payload.ts -o ../src/lang/python/envelope.py",
     "generate-csharp": "mkdir -p src/lang/csharp && cd schema && quicktype --lang csharp -s csharp ./envelope.ts ./payload.ts -o ../src/lang/csharp/envelope.cs",
     "generate-java": "mkdir -p src/lang/java && cd schema && quicktype --lang java -s java ./envelope.ts ./payload.ts -o ../src/lang/java/envelope.java",
-    "test": "jest"
+    "test": "jest",
+    "test-python": "python -m unittest discover -s src -p '*_test.py'"
   },
   "homepage": "https://github.com/mabels/c5-envelope#readme",
   "author": "Meno Abels",
