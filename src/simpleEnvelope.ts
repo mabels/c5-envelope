@@ -290,12 +290,12 @@ export function lexicalSort(a: number | string, b: number | string): number {
 
 type ValueType = string | number | boolean | Date | undefined;
 
-interface ValType {
+export interface ValType {
   toString(): string;
   asValue(): any;
 }
 
-class JsonValType implements ValType {
+export class JsonValType implements ValType {
   readonly val: ValueType;
 
   constructor(val: ValueType) {
@@ -311,7 +311,7 @@ class JsonValType implements ValType {
   }
 }
 
-class PlainValType implements ValType {
+export class PlainValType implements ValType {
   readonly val: string;
 
   constructor(val: string) {
@@ -327,7 +327,7 @@ class PlainValType implements ValType {
   }
 }
 
-enum OutState {
+export enum OutState {
   NONE = "NE",
   ARRAY_START = "AS",
   ARRAY_END = "AE",
@@ -335,13 +335,13 @@ enum OutState {
   OBJECT_END = "OE",
 }
 
-interface SVal {
+export interface SVal {
   readonly attribute?: string;
   readonly val?: ValType;
   readonly outState?: OutState;
 }
 
-type SValFn = (prob: SVal) => void;
+export type SValFn = (prob: SVal) => void;
 
 export function sortKeys<T>(e: T, out: SValFn): void {
   if (Array.isArray(e)) {

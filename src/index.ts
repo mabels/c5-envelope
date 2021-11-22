@@ -8,7 +8,13 @@ import {
   JsonCollector,
   HashCollector,
   JsonHash,
-  sortKeys
+  sortKeys,
+  SVal,
+  SValFn,
+  ValType,
+  OutState,
+  JsonValType,
+  PlainValType
 } from "./simpleEnvelope";
 import { Convert, EnvelopeT, PayloadT, V } from "./lang/ts/envelope";
 
@@ -26,5 +32,11 @@ export {
   PayloadT,
   V,
   Convert,
-  sortKeys
+  sortKeys,
+  SVal,
+  SValFn,
+  ValType,
+  OutState,
+  JsonValType,
+  PlainValType
 };
