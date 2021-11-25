@@ -2,3 +2,5 @@ node_modules
 dist
 lang
 src/__init__.py
+.idea
+**/bin

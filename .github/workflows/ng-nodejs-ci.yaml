@@ -73,3 +73,18 @@ jobs:
         python3 -m venv .
         bin/pip3 install ../dist/c5_envelope-0.0.0_smoke-py3-none-any.whl
         bin/python3 smoke.py
+
+    - name: Set variables
+      run: |
+        GO_VER=$(grep -m 1 -o -E "([0-9]+(.)[0-9]+)" go.mod)
+        echo "GO_VERSION=$GO_VER" >> $GITHUB_ENV
+
+    - uses: actions/setup-go@v2
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Build Golang Envelope
+      run: |
+        pushd src
+        go build -o bin/simple_envelope
+        go test ./...
