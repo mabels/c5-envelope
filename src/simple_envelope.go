@@ -4,18 +4,20 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"github.com/btcsuite/btcutil/base58"
-	hash2 "hash"
+	hashLib "hash"
 	"reflect"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/btcsuite/btcutil/base58"
+	quicktype "github.com/mabels/c5-envelope/src/lang/golang"
 )
 
 const JSISOStringFormat = "2006-01-02T15:04:05.999Z07:00"
 
 type ValType interface {
-	toString() string
+	toString() *string
 	asValue() interface{}
 }
 
@@ -23,12 +25,13 @@ type JsonValType struct {
 	val interface{}
 }
 
-func (j JsonValType) toString() string {
+func (j JsonValType) toString() *string {
 	out, err := json.Marshal(j.val)
 	if err != nil {
 		panic(err)
 	}
-	return string(out)
+	str := string(out)
+	return &str
 }
 
 func (j JsonValType) asValue() interface{} {
@@ -36,10 +39,10 @@ func (j JsonValType) asValue() interface{} {
 }
 
 type PlainValType struct {
-	val string
+	val *string
 }
 
-func (p PlainValType) toString() string {
+func (p PlainValType) toString() *string {
 	return p.val
 }
 
@@ -232,7 +235,7 @@ func (j *JsonCollector) Append(sVal SVal) {
 }
 
 type HashCollector struct {
-	hash hash2.Hash
+	hash hashLib.Hash
 }
 
 func NewHashCollector() *HashCollector {
@@ -267,10 +270,10 @@ func (h *HashCollector) Append(v SVal) {
 	}
 }
 
-type Payload struct {
-	Kind string      `json:"kind"`
-	Data interface{} `json:"data"`
-}
+// type Payload struct {
+// 	Kind string      `json:"kind"`
+// 	Data interface{} `json:"data"`
+// }
 
 type SimpleEnvelopeProps struct {
 	id       string
@@ -278,23 +281,23 @@ type SimpleEnvelopeProps struct {
 	dst      []string
 	t        time.Time
 	ttl      int
-	data     Payload
+	data     quicktype.PayloadT1
 	jsonProp *JsonProps
 }
 
-type Envelope struct {
-	V    string   `json:"v"`
-	Id   string   `json:"id"`
-	Src  string   `json:"src"`
-	Dst  []string `json:"dst"`
-	T    int64    `json:"t"`
-	Ttl  int      `json:"ttl"`
-	Data Payload  `json:"data"`
-}
+// type Envelope struct {
+// 	V    string   `json:"v"`
+// 	Id   string   `json:"id"`
+// 	Src  string   `json:"src"`
+// 	Dst  []string `json:"dst"`
+// 	T    int64    `json:"t"`
+// 	Ttl  int      `json:"ttl"`
+// 	Data Payload  `json:"data"`
+// }
 
 type JsonHash struct {
-	jsonStr string
-	hash    string
+	JsonStr *string
+	Hash    *string
 }
 
 type TimeGenerator interface {
@@ -311,7 +314,7 @@ type SimpleEnvelope struct {
 	simpleEnvelopeProps *SimpleEnvelopeProps
 	envJsonStrings      []string
 	envJsonC            *JsonCollector
-	Envelope            *Envelope
+	Envelope            *quicktype.EnvelopeT
 	DataJsonHash        *JsonHash
 	timeGenerator       TimeGenerator
 }
@@ -327,8 +330,8 @@ func NewSimpleEnvelope(env *SimpleEnvelopeProps) *SimpleEnvelope {
 	return se
 }
 
-func (s *SimpleEnvelope) AsDataJson() string {
-	return s.DataJsonHash.jsonStr
+func (s *SimpleEnvelope) AsDataJson() *string {
+	return s.DataJsonHash.JsonStr
 }
 
 func (s *SimpleEnvelope) toDataJson() *JsonHash {
@@ -357,13 +360,15 @@ func (s *SimpleEnvelope) toDataJson() *JsonHash {
 		}
 	}
 	sortKeys(s.simpleEnvelopeProps.data.Data, dataProcessor)
-	hashVal := ""
+	var hashVal *string
 	if dataHashC != nil {
-		hashVal = dataHashC.Digest()
+		hash := dataHashC.Digest()
+		hashVal = &hash
 	}
+	jsonStr := strings.Join(dataJsonStrings[:], "")
 	return &JsonHash{
-		jsonStr: strings.Join(dataJsonStrings[:], ""),
-		hash:    hashVal,
+		JsonStr: &jsonStr,
+		Hash:    hashVal,
 	}
 
 }
@@ -378,21 +383,21 @@ func (s *SimpleEnvelope) Lazy() *SimpleEnvelope {
 
 	id := s.simpleEnvelopeProps.id
 	if id == "" {
-		id = fmt.Sprintf("%v-%v", t, s.DataJsonHash.hash)
+		id = fmt.Sprintf("%v-%v", t, s.DataJsonHash.Hash)
 	}
 
 	ttl := s.simpleEnvelopeProps.ttl
 	if ttl == 0 {
 		ttl = 10
 	}
-	envelope := &Envelope{
-		V:   "A",
-		Id:  id,
+	envelope := &quicktype.EnvelopeT{
+		V:   quicktype.V_A,
+		ID:  id,
 		Src: s.simpleEnvelopeProps.src,
 		Dst: s.simpleEnvelopeProps.dst,
-		T:   t,
-		Ttl: ttl,
-		Data: Payload{
+		T:   float64(t),
+		TTL: float64(ttl),
+		Data: quicktype.PayloadT1{
 			Kind: s.simpleEnvelopeProps.data.Kind,
 		},
 	}
@@ -405,7 +410,7 @@ func (s *SimpleEnvelope) Lazy() *SimpleEnvelope {
 		} else if nextValue {
 			if sval.val != nil && sval.val.asValue() == nil {
 				oval = SVal{
-					val: PlainValType{s.AsDataJson()},
+					val: PlainValType{val: s.AsDataJson()},
 				}
 			}
 		}
@@ -421,6 +426,6 @@ func (s *SimpleEnvelope) AsJson() string {
 	return strings.Join(s.Lazy().envJsonStrings[:], "")
 }
 
-func (s *SimpleEnvelope) AsEnvelope() *Envelope {
+func (s *SimpleEnvelope) AsEnvelope() *quicktype.EnvelopeT {
 	return s.Lazy().Envelope
 }

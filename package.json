@@ -4,13 +4,14 @@
   "description": "C5-ENVELOPE Repository",
   "main": "./dist/src/index.js",
   "scripts": {
-    "build": "npm run generate-ts; npm run compile; npm run generate-jschema; npm run generate-python; npm run generate-csharp; npm run generate-java",
+    "build": "npm run generate-ts; npm run compile; npm run generate-jschema; npm run generate-python; npm run generate-csharp; npm run generate-java ; npm run generate-golang",
     "compile": "tsc",
-    "generate-ts": "mkdir -p src/lang/ts && cd schema && quicktype --lang typescript -s typscript ./envelope.ts ./payload.ts -o ../src/lang/ts/envelope.ts",
-    "generate-jschema": "mkdir -p src/lang/jschema && cd schema && quicktype --lang schema -s typescript ./envelope.ts ./payload.ts -o ../src/lang/jschema/envelope.json",
-    "generate-python": "mkdir -p src/lang/python && cd schema && quicktype --lang python -s python ./envelope.ts ./payload.ts -o ../src/lang/python/envelope.py",
-    "generate-csharp": "mkdir -p src/lang/csharp && cd schema && quicktype --lang csharp -s csharp ./envelope.ts ./payload.ts -o ../src/lang/csharp/envelope.cs",
-    "generate-java": "mkdir -p src/lang/java && cd schema && quicktype --lang java -s java ./envelope.ts ./payload.ts -o ../src/lang/java/envelope.java",
+    "generate-ts": "mkdir -p src/lang/ts && cd schema && node ../../quicktype/target/index.js --lang typescript -s typscript ./envelope.ts ./payload.ts ./sample.ts -o ../src/lang/ts/envelope.ts",
+    "generate-jschema": "mkdir -p src/lang/jschema && cd schema && node ../../quicktype/target/index.js --lang schema -s typescript ./envelope.ts ./payload.ts ./sample.ts -o ../src/lang/jschema/envelope.json",
+    "generate-python": "mkdir -p src/lang/python && cd schema && node ../../quicktype/target/index.js --lang python -s python ./envelope.ts ./payload.ts ./sample.ts -o ../src/lang/python/envelope.py",
+    "generate-csharp": "mkdir -p src/lang/csharp && cd schema && node ../../quicktype/target/index.js --lang csharp -s csharp ./envelope.ts ./payload.ts ./sample.ts -o ../src/lang/csharp/envelope.cs",
+    "generate-java": "mkdir -p src/lang/java && cd schema && node ../../quicktype/target/index.js --lang java -s java ./envelope.ts ./payload.ts ./sample.ts -o ../src/lang/java/envelope.java",
+    "generate-golang": "mkdir -p src/lang/golang && cd schema && node ../../quicktype/target/index.js --lang go -s go ./envelope.ts ./payload.ts ./sample.ts -o ../src/lang/golang/envelope.go --package quicktype",
     "test": "jest",
     "test-python": "python -m unittest discover -s src -p '*_test.py'"
   },
@@ -24,7 +25,7 @@
     "@types/jest": "^26.0.23",
     "@types/node": "^15.3.1",
     "jest": "^27.3.1",
-    "quicktype": "^15.0.240",
+    "node ../../quicktype/target/index.js": "^15.0.240",
     "ts-jest": "^27.0.7",
     "typescript": "^4.2.4"
   }

@@ -4,13 +4,15 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/json"
+	"testing"
+	"time"
+
 	"github.com/btcsuite/btcutil/base58"
+	quicktype "github.com/mabels/c5-envelope/src/lang/golang"
 	"github.com/mabels/c5-envelope/src/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
-	"testing"
-	"time"
 )
 
 type SimpleEnvelopeSuite struct {
@@ -593,18 +595,17 @@ func (s *SimpleEnvelopeSuite) TestSimpleHash() {
 // ## SimpleEnvelope tests ##
 // ##########################
 func (s *SimpleEnvelopeSuite) TestSerialization() {
+	typ := quicktype.SampleNameDate{}
+	quicktype.FromDictSampleNameDate(map[string]interface{}{
+		"Name": "object",
+		"Date": "2021-05-20",
+	}, &typ)
 	props := &SimpleEnvelopeProps{
 		id:  "1624140000000-4a2a6fb97b3afe6a7ca4c13457c441664c7f6a6c2ea7782e1f2dea384cf97cb8",
 		src: "test case",
-		data: Payload{
+		data: quicktype.PayloadT1{
 			Kind: "test",
-			Data: struct {
-				Name string `json:"name"`
-				Date string `json:"date"`
-			}{
-				Name: "object",
-				Date: "2021-05-20",
-			},
+			Data: typ.ToDict(),
 		},
 		dst: []string{},
 		t:   time.UnixMilli(444),
@@ -621,17 +622,16 @@ func (*mockedTimer) Now() time.Time {
 }
 
 func (s *SimpleEnvelopeSuite) TestSerializationWithHash() {
+	typ := quicktype.SampleNameDate{}
+	quicktype.FromDictSampleNameDate(map[string]interface{}{
+		"Name": "object",
+		"Date": "2021-05-20",
+	}, &typ)
 	props := &SimpleEnvelopeProps{
 		src: "test case",
-		data: Payload{
+		data: quicktype.PayloadT1{
 			Kind: "test",
-			Data: struct {
-				Name string `json:"name"`
-				Date string `json:"date"`
-			}{
-				Name: "object",
-				Date: "2021-05-20",
-			},
+			Data: typ.ToDict(),
 		},
 		dst: []string{},
 		ttl: 10,
@@ -647,17 +647,16 @@ func (s *SimpleEnvelopeSuite) TestSerializationWithIndent() {
 	err := json.Indent(&out, b, "", "  ")
 	assert.NoError(s.T(), err)
 
+	typ := quicktype.SampleNameDate{}
+	quicktype.FromDictSampleNameDate(map[string]interface{}{
+		"Name": "object",
+		"Date": "2021-05-20",
+	}, &typ)
 	props := &SimpleEnvelopeProps{
 		src: "test case",
-		data: Payload{
+		data: quicktype.PayloadT1{
 			Kind: "test",
-			Data: struct {
-				Name string `json:"name"`
-				Date string `json:"date"`
-			}{
-				Name: "object",
-				Date: "2021-05-20",
-			},
+			Data: typ.ToDict(),
 		},
 		dst:      []string{},
 		ttl:      10,
@@ -669,45 +668,43 @@ func (s *SimpleEnvelopeSuite) TestSerializationWithIndent() {
 }
 
 func (s *SimpleEnvelopeSuite) TestMissingDataInEnvelope() {
-	type PayloadData struct {
-		Y int `json:"y"`
-	}
-
+	typ := quicktype.SampleY{Y: 4}
 	message := &SimpleEnvelopeProps{
 		src: "test case",
-		data: Payload{
+		data: quicktype.PayloadT1{
 			Kind: "kind",
-			Data: PayloadData{
-				Y: 4,
-			},
+			Data: typ.ToDict(),
 		},
 	}
 	se := NewSimpleEnvelope(message)
 	se.timeGenerator = &mockedTimer{}
 
-	var ref Envelope
+	var ref quicktype.EnvelopeT
 	assert.NoError(s.T(), json.Unmarshal([]byte(se.AsJson()), &ref))
 
 	env := NewSimpleEnvelope(&SimpleEnvelopeProps{
-		id:       ref.Id,
+		id:       ref.ID,
 		src:      ref.Src,
 		dst:      ref.Dst,
-		t:        time.UnixMilli(ref.T),
-		ttl:      ref.Ttl,
+		t:        time.UnixMilli(int64(ref.T)),
+		ttl:      int(ref.TTL),
 		data:     ref.Data,
 		jsonProp: nil,
 	})
 	env.timeGenerator = &mockedTimer{}
 
-	envData := env.AsEnvelope().Data
-	assert.Equal(s.T(), message.data.Kind, envData.Kind)
+	envData := env.AsEnvelope()
+	assert.Equal(s.T(), message.data.Kind, envData.Data.Kind)
 
-	yVal, ok := message.data.Data.(PayloadData)
-	assert.True(s.T(), ok)
+	yEnv := quicktype.EnvelopeT{}
+	ok := quicktype.FromDictEnvelopeT(env.AsEnvelope().ToDict(), &yEnv)
+	assert.Error(s.T(), ok)
 
-	mapVal, ok := envData.Data.(map[string]interface{})
-	assert.True(s.T(), ok)
+	mapVal := env.AsEnvelope().ToDict()["data"].(map[string]interface{})["data"].(map[string]interface{})
+	// assert.True(s.T(), ok)
 
+	yVal := quicktype.SampleY{}
+	quicktype.FromDictSampleY(yEnv.Data.Data, &yVal)
 	assert.EqualValues(s.T(), yVal.Y, mapVal["y"])
 }
 
