@@ -597,15 +597,15 @@ func (s *SimpleEnvelopeSuite) TestSimpleHash() {
 func (s *SimpleEnvelopeSuite) TestSerialization() {
 	typ := quicktype.SampleNameDate{}
 	quicktype.FromDictSampleNameDate(map[string]interface{}{
-		"Name": "object",
-		"Date": "2021-05-20",
+		"name": "object",
+		"date": "2021-05-20",
 	}, &typ)
 	props := &SimpleEnvelopeProps{
 		id:  "1624140000000-4a2a6fb97b3afe6a7ca4c13457c441664c7f6a6c2ea7782e1f2dea384cf97cb8",
 		src: "test case",
 		data: quicktype.PayloadT1{
-			Kind: "test",
 			Data: typ.ToDict(),
+			Kind: "test",
 		},
 		dst: []string{},
 		t:   time.UnixMilli(444),
@@ -624,8 +624,8 @@ func (*mockedTimer) Now() time.Time {
 func (s *SimpleEnvelopeSuite) TestSerializationWithHash() {
 	typ := quicktype.SampleNameDate{}
 	quicktype.FromDictSampleNameDate(map[string]interface{}{
-		"Name": "object",
-		"Date": "2021-05-20",
+		"name": "object",
+		"date": "2021-05-20",
 	}, &typ)
 	props := &SimpleEnvelopeProps{
 		src: "test case",
@@ -649,8 +649,8 @@ func (s *SimpleEnvelopeSuite) TestSerializationWithIndent() {
 
 	typ := quicktype.SampleNameDate{}
 	quicktype.FromDictSampleNameDate(map[string]interface{}{
-		"Name": "object",
-		"Date": "2021-05-20",
+		"name": "object",
+		"date": "2021-05-20",
 	}, &typ)
 	props := &SimpleEnvelopeProps{
 		src: "test case",

@@ -213,7 +213,7 @@ func (j *JsonCollector) Append(sVal SVal) {
 
 	if sVal.val != nil {
 		j.elements[len(j.elements)-1]++
-		j.output(fmt.Sprintf("%v%v%v%v", j.commas[len(j.commas)-1], j.Suffix(), j.attribute, sVal.val.toString()))
+		j.output(fmt.Sprintf("%v%v%v%v", j.commas[len(j.commas)-1], j.Suffix(), j.attribute, *sVal.val.toString()))
 		j.attribute = ""
 		j.commas[len(j.commas)-1] = ","
 	}
@@ -383,7 +383,7 @@ func (s *SimpleEnvelope) Lazy() *SimpleEnvelope {
 
 	id := s.simpleEnvelopeProps.id
 	if id == "" {
-		id = fmt.Sprintf("%v-%v", t, s.DataJsonHash.Hash)
+		id = fmt.Sprintf("%v-%v", t, *s.DataJsonHash.Hash)
 	}
 
 	ttl := s.simpleEnvelopeProps.ttl
