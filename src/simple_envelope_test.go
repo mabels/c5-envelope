@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/json"
+	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -64,9 +66,11 @@ func (s *SimpleEnvelopeSuite) TestSortWithOutWithArrayOfEmpty() {
 	s.mockedSvalFn.On("Execute", mock.MatchedBy(func(sVal SVal) bool {
 		result := false
 		if funcCallIdx == 1 {
-			result = assert.Equal(s.T(), nil, sVal.val) && assert.Equal(s.T(), ARRAY_START, sVal.outState)
+			result = assert.Equal(s.T(), nil, sVal.val)
+			result = result && assert.Equal(s.T(), ARRAY_START, sVal.outState.String())
 		} else if funcCallIdx == 2 {
-			result = assert.Equal(s.T(), nil, sVal.val) && assert.Equal(s.T(), ARRAY_END, sVal.outState)
+			result = assert.Equal(s.T(), nil, sVal.val)
+			result = result && assert.Equal(s.T(), ARRAY_END, sVal.outState.String())
 		}
 		funcCallIdx++
 		return result
@@ -80,13 +84,15 @@ func (s *SimpleEnvelopeSuite) TestSortWithOutWithArrayOf_1_2() {
 	s.mockedSvalFn.On("Execute", mock.MatchedBy(func(sVal SVal) bool {
 		result := false
 		if funcCallIdx == 1 {
-			result = assert.Equal(s.T(), nil, sVal.val) && assert.Equal(s.T(), ARRAY_START, sVal.outState)
+			result = assert.Equal(s.T(), nil, sVal.val)
+			result = result && assert.Equal(s.T(), ARRAY_START, sVal.outState.String())
 		} else if funcCallIdx == 2 {
 			result = assert.Equal(s.T(), ar[0], (sVal.val.(JsonValType)).val)
 		} else if funcCallIdx == 3 {
 			result = assert.Equal(s.T(), ar[1], (sVal.val.(JsonValType)).val)
 		} else if funcCallIdx == 4 {
-			result = assert.Equal(s.T(), nil, sVal.val) && assert.Equal(s.T(), ARRAY_END, sVal.outState)
+			result = assert.Equal(s.T(), nil, sVal.val)
+			result = result && assert.Equal(s.T(), ARRAY_END, sVal.outState.String())
 		}
 		funcCallIdx++
 		return result
@@ -100,13 +106,15 @@ func (s *SimpleEnvelopeSuite) TestSortWithOutWithArrayOf_1_2_3_4() {
 	s.mockedSvalFn.On("Execute", mock.MatchedBy(func(sVal SVal) bool {
 		result := false
 		if funcCallIdx == 1 || funcCallIdx == 2 || funcCallIdx == 6 {
-			result = assert.Equal(s.T(), nil, sVal.val) && assert.Equal(s.T(), ARRAY_START, sVal.outState)
+			result = assert.Equal(s.T(), nil, sVal.val)
+			result = result && assert.Equal(s.T(), ARRAY_START, sVal.outState.String())
 		} else if funcCallIdx == 3 {
 			result = assert.Equal(s.T(), ar[0][0], (sVal.val.(JsonValType)).val)
 		} else if funcCallIdx == 4 {
 			result = assert.Equal(s.T(), ar[0][1], (sVal.val.(JsonValType)).val)
 		} else if funcCallIdx == 5 || funcCallIdx == 9 || funcCallIdx == 10 {
-			result = assert.Equal(s.T(), nil, sVal.val) && assert.Equal(s.T(), ARRAY_END, sVal.outState)
+			result = assert.Equal(s.T(), nil, sVal.val)
+			result = result && assert.Equal(s.T(), ARRAY_END, sVal.outState.String())
 		} else if funcCallIdx == 7 {
 			result = assert.Equal(s.T(), ar[1][0], (sVal.val.(JsonValType)).val)
 		} else if funcCallIdx == 8 {
@@ -124,9 +132,11 @@ func (s *SimpleEnvelopeSuite) TestSortWithOutWithObjOfEmptyObj() {
 	s.mockedSvalFn.On("Execute", mock.MatchedBy(func(sVal SVal) bool {
 		result := false
 		if funcCallIdx == 1 {
-			result = assert.Equal(s.T(), nil, sVal.val) && assert.Equal(s.T(), OBJECT_START, sVal.outState)
+			result = assert.Equal(s.T(), nil, sVal.val)
+			result = result && assert.Equal(s.T(), OBJECT_START, sVal.outState.String())
 		} else if funcCallIdx == 2 {
-			result = assert.Equal(s.T(), nil, sVal.val) && assert.Equal(s.T(), OBJECT_END, sVal.outState)
+			result = assert.Equal(s.T(), nil, sVal.val)
+			result = result && assert.Equal(s.T(), OBJECT_END, sVal.outState.String())
 		}
 		funcCallIdx++
 		return result
@@ -139,7 +149,8 @@ func (s *SimpleEnvelopeSuite) TestSortWithOutWithObjOfObj_Y_1_X_2() {
 	s.mockedSvalFn.On("Execute", mock.MatchedBy(func(sVal SVal) bool {
 		result := false
 		if funcCallIdx == 1 {
-			result = assert.Equal(s.T(), nil, sVal.val) && assert.Equal(s.T(), OBJECT_START, sVal.outState)
+			result = assert.Equal(s.T(), nil, sVal.val)
+			result = result && assert.Equal(s.T(), OBJECT_START, sVal.outState.String())
 		} else if funcCallIdx == 2 {
 			result = assert.Equal(s.T(), "x", sVal.attribute)
 		} else if funcCallIdx == 3 {
@@ -149,7 +160,8 @@ func (s *SimpleEnvelopeSuite) TestSortWithOutWithObjOfObj_Y_1_X_2() {
 		} else if funcCallIdx == 5 {
 			result = assert.Equal(s.T(), 1, (sVal.val.(JsonValType)).val)
 		} else if funcCallIdx == 6 {
-			result = assert.Equal(s.T(), nil, sVal.val) && assert.Equal(s.T(), OBJECT_END, sVal.outState)
+			result = assert.Equal(s.T(), nil, sVal.val)
+			result = result && assert.Equal(s.T(), OBJECT_END, sVal.outState.String())
 		}
 		funcCallIdx++
 		return result
@@ -165,7 +177,8 @@ func (s *SimpleEnvelopeSuite) TestSortWithOutWithObjOfObj_Y_B_1_A_2() {
 	s.mockedSvalFn.On("Execute", mock.MatchedBy(func(sVal SVal) bool {
 		result := false
 		if funcCallIdx == 1 || funcCallIdx == 3 {
-			result = assert.Equal(s.T(), nil, sVal.val) && assert.Equal(s.T(), OBJECT_START, sVal.outState)
+			result = assert.Equal(s.T(), nil, sVal.val)
+			result = result && assert.Equal(s.T(), OBJECT_START, sVal.outState.String())
 		} else if funcCallIdx == 2 {
 			result = assert.Equal(s.T(), "y", sVal.attribute)
 		} else if funcCallIdx == 4 {
@@ -177,7 +190,8 @@ func (s *SimpleEnvelopeSuite) TestSortWithOutWithObjOfObj_Y_B_1_A_2() {
 		} else if funcCallIdx == 7 {
 			result = assert.Equal(s.T(), 1, (sVal.val.(JsonValType)).val)
 		} else if funcCallIdx == 8 || funcCallIdx == 9 {
-			result = assert.Equal(s.T(), nil, sVal.val) && assert.Equal(s.T(), OBJECT_END, sVal.outState)
+			result = assert.Equal(s.T(), nil, sVal.val)
+			result = result && assert.Equal(s.T(), OBJECT_END, sVal.outState.String())
 		}
 		funcCallIdx++
 		return result
@@ -600,6 +614,7 @@ func (s *SimpleEnvelopeSuite) TestSerialization() {
 		"name": "object",
 		"date": "2021-05-20",
 	}, &typ)
+	// s.Assertions.Equal(typ.ToDict(), []string{})
 	props := &SimpleEnvelopeProps{
 		id:  "1624140000000-4a2a6fb97b3afe6a7ca4c13457c441664c7f6a6c2ea7782e1f2dea384cf97cb8",
 		src: "test case",
@@ -612,7 +627,7 @@ func (s *SimpleEnvelopeSuite) TestSerialization() {
 		ttl: 10,
 	}
 	se := NewSimpleEnvelope(props)
-	assert.JSONEq(s.T(), se.AsJson(), `{"data":{"data":{"date":"2021-05-20","name":"object"},"kind":"test"},"dst":[],"id":"1624140000000-4a2a6fb97b3afe6a7ca4c13457c441664c7f6a6c2ea7782e1f2dea384cf97cb8","src":"test case","t":444,"ttl":10,"v":"A"}`)
+	assert.JSONEq(s.T(), *se.AsJson(), `{"data":{"data":{"date":"2021-05-20","name":"object"},"kind":"test"},"dst":[],"id":"1624140000000-4a2a6fb97b3afe6a7ca4c13457c441664c7f6a6c2ea7782e1f2dea384cf97cb8","src":"test case","t":444,"ttl":10,"v":"A"}`)
 }
 
 type mockedTimer struct{}
@@ -638,7 +653,7 @@ func (s *SimpleEnvelopeSuite) TestSerializationWithHash() {
 	}
 	se := NewSimpleEnvelope(props)
 	se.timeGenerator = &mockedTimer{}
-	assert.JSONEq(s.T(), se.AsJson(), `{"data":{"data":{"date":"2021-05-20","name":"object"},"kind":"test"},"dst":[],"id":"1624140000000-BbYxQMurpUmj1W6E4EwYM79Rm3quSz1wwtNZDSsFt1bp","src":"test case","t":1624140000000,"ttl":10,"v":"A"}`)
+	assert.JSONEq(s.T(), *se.AsJson(), `{"data":{"data":{"date":"2021-05-20","name":"object"},"kind":"test"},"dst":[],"id":"1624140000000-BbYxQMurpUmj1W6E4EwYM79Rm3quSz1wwtNZDSsFt1bp","src":"test case","t":1624140000000,"ttl":10,"v":"A"}`)
 }
 
 func (s *SimpleEnvelopeSuite) TestSerializationWithIndent() {
@@ -664,7 +679,7 @@ func (s *SimpleEnvelopeSuite) TestSerializationWithIndent() {
 	}
 	se := NewSimpleEnvelope(props)
 	se.timeGenerator = &mockedTimer{}
-	assert.Equal(s.T(), se.AsJson(), out.String())
+	assert.Equal(s.T(), *se.AsJson(), out.String())
 }
 
 func (s *SimpleEnvelopeSuite) TestMissingDataInEnvelope() {
@@ -680,7 +695,7 @@ func (s *SimpleEnvelopeSuite) TestMissingDataInEnvelope() {
 	se.timeGenerator = &mockedTimer{}
 
 	var ref quicktype.EnvelopeT
-	assert.NoError(s.T(), json.Unmarshal([]byte(se.AsJson()), &ref))
+	assert.NoError(s.T(), json.Unmarshal([]byte(*se.AsJson()), &ref))
 
 	env := NewSimpleEnvelope(&SimpleEnvelopeProps{
 		id:       ref.ID,
@@ -698,7 +713,9 @@ func (s *SimpleEnvelopeSuite) TestMissingDataInEnvelope() {
 
 	yEnv := quicktype.EnvelopeT{}
 	ok := quicktype.FromDictEnvelopeT(env.AsEnvelope().ToDict(), &yEnv)
-	assert.Error(s.T(), ok)
+	fmt.Fprintln(os.Stderr, ok)
+	// fmt.Fprintln(os.Stderr, yEnv)
+	assert.Nil(s.T(), ok)
 
 	mapVal := env.AsEnvelope().ToDict()["data"].(map[string]interface{})["data"].(map[string]interface{})
 	// assert.True(s.T(), ok)

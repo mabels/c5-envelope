@@ -73,3 +73,18 @@ jobs:
         python3 -m venv .
         bin/pip3 install ../dist/c5_envelope-0.0.0_smoke-py3-none-any.whl
         bin/python3 smoke.py
+
+
+    - uses: actions/setup-go@v2
+      with:
+      go-version: '^1.17'
+
+    - name: Build GO Envelope
+      run: |
+        rm -rf ./dist
+        go test github.com/mabels/c5-envelope/src
+
+    - name: Smoke GO
+      run: |
+        cd smoke
+        go get github.com/mabels/c5-envelope/src

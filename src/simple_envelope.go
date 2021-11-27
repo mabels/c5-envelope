@@ -50,41 +50,46 @@ func (p PlainValType) asValue() interface{} {
 	return p.val
 }
 
-type OutState int
+type OutState string
 
 const (
-	NONE OutState = iota
-	ARRAY_START
-	ARRAY_END
-	OBJECT_START
-	OBJECT_END
+	NONE         = "NONE"
+	ARRAY_START  = "AS"
+	ARRAY_END    = "AE"
+	OBJECT_START = "OS"
+	OBJECT_END   = "OE"
 )
 
 func (o OutState) String() string {
 	switch o {
 	case NONE:
-		return "NE"
+		return NONE
 	case ARRAY_START:
-		return "AS"
+		return ARRAY_START
 	case ARRAY_END:
-		return "AE"
+		return ARRAY_END
 	case OBJECT_START:
-		return "OS"
+		return OBJECT_START
 	case OBJECT_END:
-		return "OE"
+		return OBJECT_END
 	}
-	return "unknown"
+	panic(fmt.Sprintf("Should not reached:%s", string(o)))
 }
 
 type SVal struct {
 	attribute string
 	val       ValType
 	outState  OutState
+	path      string
 }
 
 type SvalFn func(prob SVal)
 
-func sortKeys(e interface{}, out SvalFn) {
+func sortKeys(e interface{}, out SvalFn, paths ...string) {
+	path := ""
+	if len(paths) > 0 {
+		path = paths[0]
+	}
 	_, isTime := e.(time.Time)
 	k := reflect.Invalid
 	if e != nil {
@@ -92,14 +97,14 @@ func sortKeys(e interface{}, out SvalFn) {
 	}
 	valOf := reflect.ValueOf(e)
 	if k == reflect.Slice {
-		out(SVal{outState: ARRAY_START})
+		out(SVal{path: path, outState: ARRAY_START})
 		for i := 0; i < valOf.Len(); i++ {
-			sortKeys(valOf.Index(i).Interface(), out)
+			sortKeys(valOf.Index(i).Interface(), out, fmt.Sprintf("%s/%d", path, i))
 		}
-		out(SVal{outState: ARRAY_END})
+		out(SVal{outState: ARRAY_END, path: path})
 		return
 	} else if k == reflect.Struct && !isTime {
-		out(SVal{outState: OBJECT_START})
+		out(SVal{outState: OBJECT_START, path: path})
 		keys := make([]string, 0, valOf.NumField())
 		m := make(map[string]interface{})
 		for i := 0; i < valOf.NumField(); i++ {
@@ -116,15 +121,37 @@ func sortKeys(e interface{}, out SvalFn) {
 			keys = append(keys, fieldName)
 		}
 		sort.Strings(keys)
-		for _, k := range keys {
-			out(SVal{attribute: k})
-			sortKeys(m[k], out)
+		for _, key := range keys {
+			sub := fmt.Sprintf("%s/%s", path, key)
+			out(SVal{attribute: key, outState: NONE, path: sub})
+			sortKeys(m[key], out, sub)
 		}
-		out(SVal{outState: OBJECT_END})
+		out(SVal{outState: OBJECT_END, path: path})
 		return
 	}
+	if k == reflect.Map && !isTime {
+		out(SVal{outState: OBJECT_START, path: path})
+		mappe := e.(map[string]interface{})
+		keys := make([]string, len(mappe))
+		idx := 0
+		for key := range mappe {
+			keys[idx] = key
+			idx++
+		}
+		sort.Strings(keys)
+		for _, key := range keys {
+			sub := fmt.Sprintf("%s/%s", path, key)
+			out(SVal{attribute: key, outState: NONE, path: sub})
+			sortKeys(mappe[key], out, sub)
+		}
+		out(SVal{outState: OBJECT_END, path: path})
+		return
+	}
+	// else {
+	//	fmt.Println("Reflect:", k)
+	//}
 
-	out(SVal{val: JsonValType{e}})
+	out(SVal{val: JsonValType{e}, outState: NONE, path: path})
 	return
 }
 
@@ -180,7 +207,11 @@ func NewJsonCollector(o OutputFN, p *JsonProps) *JsonCollector {
 
 func (j *JsonCollector) Suffix() string {
 	if j.elements[len(j.elements)-1] > 0 {
-		return fmt.Sprintf("%v%v", j.nextLine, strings.Repeat(j.indent, len(j.commas)-1))
+		commas := len(j.commas)
+		if commas > 0 {
+			commas -= 1
+		}
+		return fmt.Sprintf("%v%v", j.nextLine, strings.Repeat(j.indent, commas))
 	}
 	return ""
 }
@@ -219,7 +250,11 @@ func (j *JsonCollector) Append(sVal SVal) {
 	}
 
 	if sVal.attribute != "" {
-		j.elements[len(j.elements)-1]++
+		eidx := len(j.elements)
+		if eidx != 0 {
+			eidx -= 1
+		}
+		j.elements[eidx]++
 
 		b, err := json.Marshal(sVal.attribute)
 		if err != nil {
@@ -245,20 +280,23 @@ func NewHashCollector() *HashCollector {
 }
 
 func (h *HashCollector) Digest() string {
+	// b := []byte{}
 	return base58.Encode(h.hash.Sum(nil))
 }
 
-func (h *HashCollector) Append(v SVal) {
-	if v.outState != NONE {
+func (h *HashCollector) Append(sval SVal) {
+	if sval.outState != NONE {
 		return
 	}
 
-	if v.attribute != "" {
-		h.hash.Write([]byte(v.attribute))
+	// fmt.Println("SVAL", sval)
+	if sval.attribute != "" {
+		// fmt.Println("ATTRIB", sval.attribute)
+		h.hash.Write([]byte(sval.attribute))
 	}
 
-	if v.val != nil {
-		vl := v.val.asValue()
+	if sval.val != nil {
+		vl := sval.val.asValue()
 		tval, isTime := vl.(time.Time)
 		var t string
 		if isTime {
@@ -266,6 +304,7 @@ func (h *HashCollector) Append(v SVal) {
 		} else {
 			t = fmt.Sprintf("%v", vl)
 		}
+		// fmt.Println("VAL", t)
 		h.hash.Write([]byte(t))
 	}
 }
@@ -313,6 +352,7 @@ func (*realTimer) Now() time.Time {
 type SimpleEnvelope struct {
 	simpleEnvelopeProps *SimpleEnvelopeProps
 	envJsonStrings      []string
+	envJsonString       *string
 	envJsonC            *JsonCollector
 	Envelope            *quicktype.EnvelopeT
 	DataJsonHash        *JsonHash
@@ -323,6 +363,7 @@ func NewSimpleEnvelope(env *SimpleEnvelopeProps) *SimpleEnvelope {
 	se := &SimpleEnvelope{
 		simpleEnvelopeProps: env,
 		timeGenerator:       &realTimer{},
+		// envJsonStrings:      make([]string, 1000),
 	}
 	se.envJsonC = NewJsonCollector(func(part string) {
 		se.envJsonStrings = append(se.envJsonStrings, part)
@@ -402,28 +443,41 @@ func (s *SimpleEnvelope) Lazy() *SimpleEnvelope {
 		},
 	}
 
-	nextValue := false
 	sortKeys(*envelope, func(sval SVal) {
 		oval := sval
-		if sval.attribute == "data" {
-			nextValue = true
-		} else if nextValue {
-			if sval.val != nil && sval.val.asValue() == nil {
+		// /data/date
+
+		// fmt.Fprintln(os.Stderr, "Path=", sval.path, sval.attribute)
+		if strings.HasSuffix(sval.path, "/data/data") && sval.attribute == "" {
+			// fmt.Fprintln(os.Stderr, "data/data=", sval)
+			if sval.outState.String() == OBJECT_START {
 				oval = SVal{
-					val: PlainValType{val: s.AsDataJson()},
+					outState: NONE,
+					val:      PlainValType{val: s.AsDataJson()},
 				}
+			} else {
+				return
 			}
 		}
+		// if sval.val == nil && sval.outState.String() == OBJECT_START {
+		// 	// fmt.Fprintln(os.Stderr, "XXX")
+		// }
 		s.envJsonC.Append(oval)
 	})
 	s.Envelope = envelope
 	s.Envelope.Data = envelope.Data
 	s.Envelope.Data.Data = s.simpleEnvelopeProps.data.Data
+	// fmt.Fprintln(os.Stderr, s.Envelope)
+	// fmt.Fprintln(os.Stderr, *s.AsDataJson())
 	return s
 }
 
-func (s *SimpleEnvelope) AsJson() string {
-	return strings.Join(s.Lazy().envJsonStrings[:], "")
+func (s *SimpleEnvelope) AsJson() *string {
+	if s.envJsonString == nil {
+		str := strings.Join(s.Lazy().envJsonStrings, "")
+		s.envJsonString = &str
+	}
+	return s.envJsonString
 }
 
 func (s *SimpleEnvelope) AsEnvelope() *quicktype.EnvelopeT {

@@ -146,9 +146,9 @@ func FromDictEnvelopeT(data map[string]interface{}, r *EnvelopeT) error {
 			return err
 		}
 	}
-	r.Dst = make([]string, len(data["dst"].([]interface{})))
-	for idx, i := range data["dst"].([]interface{}) {
-		r.Dst[idx] = i.(string)
+	r.Dst = make([]string, len(data["dst"].([]string)))
+	for idx, i := range data["dst"].([]string) {
+		r.Dst[idx] = i
 	}
 	r.ID = data["id"].(string)
 	r.Src = data["src"].(string)
@@ -158,7 +158,7 @@ func FromDictEnvelopeT(data map[string]interface{}, r *EnvelopeT) error {
 		var err error
 		r.V, err = FromV(data["v"].(string))
 		if err != nil {
-			return err
+			return err;
 		}
 	}
 	return nil
