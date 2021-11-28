@@ -1,17 +1,14 @@
-package c5_envelope
+package c5
 
 import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/json"
-	"fmt"
-	"os"
 	"testing"
 	"time"
 
 	"github.com/btcsuite/btcutil/base58"
-	quicktype "github.com/mabels/c5-envelope/src/lang/golang"
-	"github.com/mabels/c5-envelope/src/mocks"
+	"github.com/mabels/c5-envelope/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
@@ -609,8 +606,8 @@ func (s *SimpleEnvelopeSuite) TestSimpleHash() {
 // ## SimpleEnvelope tests ##
 // ##########################
 func (s *SimpleEnvelopeSuite) TestSerialization() {
-	typ := quicktype.SampleNameDate{}
-	quicktype.FromDictSampleNameDate(map[string]interface{}{
+	typ := SampleNameDate{}
+	FromDictSampleNameDate(map[string]interface{}{
 		"name": "object",
 		"date": "2021-05-20",
 	}, &typ)
@@ -618,7 +615,7 @@ func (s *SimpleEnvelopeSuite) TestSerialization() {
 	props := &SimpleEnvelopeProps{
 		id:  "1624140000000-4a2a6fb97b3afe6a7ca4c13457c441664c7f6a6c2ea7782e1f2dea384cf97cb8",
 		src: "test case",
-		data: quicktype.PayloadT1{
+		data: PayloadT1{
 			Data: typ.ToDict(),
 			Kind: "test",
 		},
@@ -637,14 +634,14 @@ func (*mockedTimer) Now() time.Time {
 }
 
 func (s *SimpleEnvelopeSuite) TestSerializationWithHash() {
-	typ := quicktype.SampleNameDate{}
-	quicktype.FromDictSampleNameDate(map[string]interface{}{
+	typ := SampleNameDate{}
+	FromDictSampleNameDate(map[string]interface{}{
 		"name": "object",
 		"date": "2021-05-20",
 	}, &typ)
 	props := &SimpleEnvelopeProps{
 		src: "test case",
-		data: quicktype.PayloadT1{
+		data: PayloadT1{
 			Kind: "test",
 			Data: typ.ToDict(),
 		},
@@ -662,14 +659,14 @@ func (s *SimpleEnvelopeSuite) TestSerializationWithIndent() {
 	err := json.Indent(&out, b, "", "  ")
 	assert.NoError(s.T(), err)
 
-	typ := quicktype.SampleNameDate{}
-	quicktype.FromDictSampleNameDate(map[string]interface{}{
+	typ := SampleNameDate{}
+	FromDictSampleNameDate(map[string]interface{}{
 		"name": "object",
 		"date": "2021-05-20",
 	}, &typ)
 	props := &SimpleEnvelopeProps{
 		src: "test case",
-		data: quicktype.PayloadT1{
+		data: PayloadT1{
 			Kind: "test",
 			Data: typ.ToDict(),
 		},
@@ -683,10 +680,10 @@ func (s *SimpleEnvelopeSuite) TestSerializationWithIndent() {
 }
 
 func (s *SimpleEnvelopeSuite) TestMissingDataInEnvelope() {
-	typ := quicktype.SampleY{Y: 4}
+	typ := SampleY{Y: 4}
 	message := &SimpleEnvelopeProps{
 		src: "test case",
-		data: quicktype.PayloadT1{
+		data: PayloadT1{
 			Kind: "kind",
 			Data: typ.ToDict(),
 		},
@@ -694,7 +691,7 @@ func (s *SimpleEnvelopeSuite) TestMissingDataInEnvelope() {
 	se := NewSimpleEnvelope(message)
 	se.timeGenerator = &mockedTimer{}
 
-	var ref quicktype.EnvelopeT
+	var ref EnvelopeT
 	assert.NoError(s.T(), json.Unmarshal([]byte(*se.AsJson()), &ref))
 
 	env := NewSimpleEnvelope(&SimpleEnvelopeProps{
@@ -711,17 +708,17 @@ func (s *SimpleEnvelopeSuite) TestMissingDataInEnvelope() {
 	envData := env.AsEnvelope()
 	assert.Equal(s.T(), message.data.Kind, envData.Data.Kind)
 
-	yEnv := quicktype.EnvelopeT{}
-	ok := quicktype.FromDictEnvelopeT(env.AsEnvelope().ToDict(), &yEnv)
-	fmt.Fprintln(os.Stderr, ok)
+	yEnv := EnvelopeT{}
+	ok := FromDictEnvelopeT(env.AsEnvelope().ToDict(), &yEnv)
+	//fmt.Fprintln(os.Stderr, ok)
 	// fmt.Fprintln(os.Stderr, yEnv)
 	assert.Nil(s.T(), ok)
 
 	mapVal := env.AsEnvelope().ToDict()["data"].(map[string]interface{})["data"].(map[string]interface{})
 	// assert.True(s.T(), ok)
 
-	yVal := quicktype.SampleY{}
-	quicktype.FromDictSampleY(yEnv.Data.Data, &yVal)
+	yVal := SampleY{}
+	FromDictSampleY(yEnv.Data.Data, &yVal)
 	assert.EqualValues(s.T(), yVal.Y, mapVal["y"])
 }
 

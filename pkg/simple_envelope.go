@@ -1,4 +1,4 @@
-package c5_envelope
+package c5
 
 import (
 	"crypto/sha256"
@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcutil/base58"
-	quicktype "github.com/mabels/c5-envelope/src/lang/golang"
 )
 
 const JSISOStringFormat = "2006-01-02T15:04:05.999Z07:00"
@@ -320,7 +319,7 @@ type SimpleEnvelopeProps struct {
 	dst      []string
 	t        time.Time
 	ttl      int
-	data     quicktype.PayloadT1
+	data     PayloadT1
 	jsonProp *JsonProps
 }
 
@@ -354,7 +353,7 @@ type SimpleEnvelope struct {
 	envJsonStrings      []string
 	envJsonString       *string
 	envJsonC            *JsonCollector
-	Envelope            *quicktype.EnvelopeT
+	Envelope            *EnvelopeT
 	DataJsonHash        *JsonHash
 	timeGenerator       TimeGenerator
 }
@@ -431,14 +430,14 @@ func (s *SimpleEnvelope) Lazy() *SimpleEnvelope {
 	if ttl == 0 {
 		ttl = 10
 	}
-	envelope := &quicktype.EnvelopeT{
-		V:   quicktype.V_A,
+	envelope := &EnvelopeT{
+		V:   V_A,
 		ID:  id,
 		Src: s.simpleEnvelopeProps.src,
 		Dst: s.simpleEnvelopeProps.dst,
 		T:   float64(t),
 		TTL: float64(ttl),
-		Data: quicktype.PayloadT1{
+		Data: PayloadT1{
 			Kind: s.simpleEnvelopeProps.data.Kind,
 		},
 	}
@@ -480,6 +479,6 @@ func (s *SimpleEnvelope) AsJson() *string {
 	return s.envJsonString
 }
 
-func (s *SimpleEnvelope) AsEnvelope() *quicktype.EnvelopeT {
+func (s *SimpleEnvelope) AsEnvelope() *EnvelopeT {
 	return s.Lazy().Envelope
 }
