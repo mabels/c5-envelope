@@ -613,15 +613,15 @@ func (s *SimpleEnvelopeSuite) TestSerialization() {
 	}, &typ)
 	// s.Assertions.Equal(typ.ToDict(), []string{})
 	props := &SimpleEnvelopeProps{
-		id:  "1624140000000-4a2a6fb97b3afe6a7ca4c13457c441664c7f6a6c2ea7782e1f2dea384cf97cb8",
-		src: "test case",
-		data: PayloadT1{
+		Id:  "1624140000000-4a2a6fb97b3afe6a7ca4c13457c441664c7f6a6c2ea7782e1f2dea384cf97cb8",
+		Src: "test case",
+		Data: PayloadT1{
 			Data: typ.ToDict(),
 			Kind: "test",
 		},
-		dst: []string{},
-		t:   time.UnixMilli(444),
-		ttl: 10,
+		Dst: []string{},
+		T:   time.UnixMilli(444),
+		Ttl: 10,
 	}
 	se := NewSimpleEnvelope(props)
 	assert.JSONEq(s.T(), *se.AsJson(), `{"data":{"data":{"date":"2021-05-20","name":"object"},"kind":"test"},"dst":[],"id":"1624140000000-4a2a6fb97b3afe6a7ca4c13457c441664c7f6a6c2ea7782e1f2dea384cf97cb8","src":"test case","t":444,"ttl":10,"v":"A"}`)
@@ -640,13 +640,13 @@ func (s *SimpleEnvelopeSuite) TestSerializationWithHash() {
 		"date": "2021-05-20",
 	}, &typ)
 	props := &SimpleEnvelopeProps{
-		src: "test case",
-		data: PayloadT1{
+		Src: "test case",
+		Data: PayloadT1{
 			Kind: "test",
 			Data: typ.ToDict(),
 		},
-		dst: []string{},
-		ttl: 10,
+		Dst: []string{},
+		Ttl: 10,
 	}
 	se := NewSimpleEnvelope(props)
 	se.timeGenerator = &mockedTimer{}
@@ -665,14 +665,14 @@ func (s *SimpleEnvelopeSuite) TestSerializationWithIndent() {
 		"date": "2021-05-20",
 	}, &typ)
 	props := &SimpleEnvelopeProps{
-		src: "test case",
-		data: PayloadT1{
+		Src: "test case",
+		Data: PayloadT1{
 			Kind: "test",
 			Data: typ.ToDict(),
 		},
-		dst:      []string{},
-		ttl:      10,
-		jsonProp: NewJsonProps(2, ""),
+		Dst:      []string{},
+		Ttl:      10,
+		JsonProp: NewJsonProps(2, ""),
 	}
 	se := NewSimpleEnvelope(props)
 	se.timeGenerator = &mockedTimer{}
@@ -682,8 +682,8 @@ func (s *SimpleEnvelopeSuite) TestSerializationWithIndent() {
 func (s *SimpleEnvelopeSuite) TestMissingDataInEnvelope() {
 	typ := SampleY{Y: 4}
 	message := &SimpleEnvelopeProps{
-		src: "test case",
-		data: PayloadT1{
+		Src: "test case",
+		Data: PayloadT1{
 			Kind: "kind",
 			Data: typ.ToDict(),
 		},
@@ -695,18 +695,18 @@ func (s *SimpleEnvelopeSuite) TestMissingDataInEnvelope() {
 	assert.NoError(s.T(), json.Unmarshal([]byte(*se.AsJson()), &ref))
 
 	env := NewSimpleEnvelope(&SimpleEnvelopeProps{
-		id:       ref.ID,
-		src:      ref.Src,
-		dst:      ref.Dst,
-		t:        time.UnixMilli(int64(ref.T)),
-		ttl:      int(ref.TTL),
-		data:     ref.Data,
-		jsonProp: nil,
+		Id:       ref.ID,
+		Src:      ref.Src,
+		Dst:      ref.Dst,
+		T:        time.UnixMilli(int64(ref.T)),
+		Ttl:      int(ref.TTL),
+		Data:     ref.Data,
+		JsonProp: nil,
 	})
 	env.timeGenerator = &mockedTimer{}
 
 	envData := env.AsEnvelope()
-	assert.Equal(s.T(), message.data.Kind, envData.Data.Kind)
+	assert.Equal(s.T(), message.Data.Kind, envData.Data.Kind)
 
 	yEnv := EnvelopeT{}
 	ok := FromDictEnvelopeT(env.AsEnvelope().ToDict(), &yEnv)
