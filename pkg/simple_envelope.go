@@ -314,13 +314,13 @@ func (h *HashCollector) Append(sval SVal) {
 // }
 
 type SimpleEnvelopeProps struct {
-	id       string
-	src      string
-	dst      []string
-	t        time.Time
-	ttl      int
-	data     PayloadT1
-	jsonProp *JsonProps
+	Id       string
+	Src      string
+	Dst      []string
+	T        time.Time
+	Ttl      int
+	Data     PayloadT1
+	JsonProp *JsonProps
 }
 
 // type Envelope struct {
@@ -366,7 +366,7 @@ func NewSimpleEnvelope(env *SimpleEnvelopeProps) *SimpleEnvelope {
 	}
 	se.envJsonC = NewJsonCollector(func(part string) {
 		se.envJsonStrings = append(se.envJsonStrings, part)
-	}, se.simpleEnvelopeProps.jsonProp)
+	}, se.simpleEnvelopeProps.JsonProp)
 	return se
 }
 
@@ -378,8 +378,8 @@ func (s *SimpleEnvelope) toDataJson() *JsonHash {
 	var dataJsonStrings []string
 
 	indent := 0
-	if s.simpleEnvelopeProps.jsonProp != nil {
-		indent = s.simpleEnvelopeProps.jsonProp.indent
+	if s.simpleEnvelopeProps.JsonProp != nil {
+		indent = s.simpleEnvelopeProps.JsonProp.indent
 	}
 	jpr := NewJsonProps(indent,
 		fmt.Sprintf("\n%v", strings.Repeat(" ", 2*indent)))
@@ -388,7 +388,7 @@ func (s *SimpleEnvelope) toDataJson() *JsonHash {
 	}, jpr)
 	var dataHashC *HashCollector
 	var dataProcessor SvalFn
-	if s.simpleEnvelopeProps.id != "" {
+	if s.simpleEnvelopeProps.Id != "" {
 		dataProcessor = func(sval SVal) {
 			dataJsonC.Append(sval)
 		}
@@ -399,7 +399,7 @@ func (s *SimpleEnvelope) toDataJson() *JsonHash {
 			dataJsonC.Append(sval)
 		}
 	}
-	sortKeys(s.simpleEnvelopeProps.data.Data, dataProcessor)
+	sortKeys(s.simpleEnvelopeProps.Data.Data, dataProcessor)
 	var hashVal *string
 	if dataHashC != nil {
 		hash := dataHashC.Digest()
@@ -415,30 +415,30 @@ func (s *SimpleEnvelope) toDataJson() *JsonHash {
 
 func (s *SimpleEnvelope) Lazy() *SimpleEnvelope {
 	s.DataJsonHash = s.toDataJson()
-	tstmp := s.simpleEnvelopeProps.t
+	tstmp := s.simpleEnvelopeProps.T
 	if tstmp.IsZero() {
 		tstmp = s.timeGenerator.Now()
 	}
 	t := tstmp.UnixMilli()
 
-	id := s.simpleEnvelopeProps.id
+	id := s.simpleEnvelopeProps.Id
 	if id == "" {
 		id = fmt.Sprintf("%v-%v", t, *s.DataJsonHash.Hash)
 	}
 
-	ttl := s.simpleEnvelopeProps.ttl
+	ttl := s.simpleEnvelopeProps.Ttl
 	if ttl == 0 {
 		ttl = 10
 	}
 	envelope := &EnvelopeT{
 		V:   V_A,
 		ID:  id,
-		Src: s.simpleEnvelopeProps.src,
-		Dst: s.simpleEnvelopeProps.dst,
+		Src: s.simpleEnvelopeProps.Src,
+		Dst: s.simpleEnvelopeProps.Dst,
 		T:   float64(t),
 		TTL: float64(ttl),
 		Data: PayloadT1{
-			Kind: s.simpleEnvelopeProps.data.Kind,
+			Kind: s.simpleEnvelopeProps.Data.Kind,
 		},
 	}
 
@@ -465,7 +465,7 @@ func (s *SimpleEnvelope) Lazy() *SimpleEnvelope {
 	})
 	s.Envelope = envelope
 	s.Envelope.Data = envelope.Data
-	s.Envelope.Data.Data = s.simpleEnvelopeProps.data.Data
+	s.Envelope.Data.Data = s.simpleEnvelopeProps.Data.Data
 	// fmt.Fprintln(os.Stderr, s.Envelope)
 	// fmt.Fprintln(os.Stderr, *s.AsDataJson())
 	return s
