@@ -16,16 +16,18 @@ import (
 const JSISOStringFormat = "2006-01-02T15:04:05.999Z07:00"
 
 type ValType interface {
-	toString() *string
-	asValue() interface{}
+	ToString() *string
+	AsValue() interface{}
 }
 
 type JsonValType struct {
-	val interface{}
+	Val interface{}
 }
 
-func (j JsonValType) toString() *string {
-	out, err := json.Marshal(j.val)
+// type Dict T // map[string]interface{}
+
+func (j JsonValType) ToString() *string {
+	out, err := json.Marshal(j.Val)
 	if err != nil {
 		panic(err)
 	}
@@ -33,19 +35,19 @@ func (j JsonValType) toString() *string {
 	return &str
 }
 
-func (j JsonValType) asValue() interface{} {
-	return j.val
+func (j JsonValType) AsValue() interface{} {
+	return j.Val
 }
 
 type PlainValType struct {
 	val *string
 }
 
-func (p PlainValType) toString() *string {
+func (p PlainValType) ToString() *string {
 	return p.val
 }
 
-func (p PlainValType) asValue() interface{} {
+func (p PlainValType) AsValue() interface{} {
 	return p.val
 }
 
@@ -84,7 +86,7 @@ type SVal struct {
 
 type SvalFn func(prob SVal)
 
-func sortKeys(e interface{}, out SvalFn, paths ...string) {
+func SortKeys(e interface{}, out SvalFn, paths ...string) {
 	path := ""
 	if len(paths) > 0 {
 		path = paths[0]
@@ -98,7 +100,7 @@ func sortKeys(e interface{}, out SvalFn, paths ...string) {
 	if k == reflect.Slice {
 		out(SVal{path: path, outState: ARRAY_START})
 		for i := 0; i < valOf.Len(); i++ {
-			sortKeys(valOf.Index(i).Interface(), out, fmt.Sprintf("%s/%d", path, i))
+			SortKeys(valOf.Index(i).Interface(), out, fmt.Sprintf("%s/%d", path, i))
 		}
 		out(SVal{outState: ARRAY_END, path: path})
 		return
@@ -123,7 +125,7 @@ func sortKeys(e interface{}, out SvalFn, paths ...string) {
 		for _, key := range keys {
 			sub := fmt.Sprintf("%s/%s", path, key)
 			out(SVal{attribute: key, outState: NONE, path: sub})
-			sortKeys(m[key], out, sub)
+			SortKeys(m[key], out, sub)
 		}
 		out(SVal{outState: OBJECT_END, path: path})
 		return
@@ -141,7 +143,7 @@ func sortKeys(e interface{}, out SvalFn, paths ...string) {
 		for _, key := range keys {
 			sub := fmt.Sprintf("%s/%s", path, key)
 			out(SVal{attribute: key, outState: NONE, path: sub})
-			sortKeys(mappe[key], out, sub)
+			SortKeys(mappe[key], out, sub)
 		}
 		out(SVal{outState: OBJECT_END, path: path})
 		return
@@ -243,7 +245,7 @@ func (j *JsonCollector) Append(sVal SVal) {
 
 	if sVal.val != nil {
 		j.elements[len(j.elements)-1]++
-		j.output(fmt.Sprintf("%v%v%v%v", j.commas[len(j.commas)-1], j.Suffix(), j.attribute, *sVal.val.toString()))
+		j.output(fmt.Sprintf("%v%v%v%v", j.commas[len(j.commas)-1], j.Suffix(), j.attribute, *sVal.val.ToString()))
 		j.attribute = ""
 		j.commas[len(j.commas)-1] = ","
 	}
@@ -295,7 +297,7 @@ func (h *HashCollector) Append(sval SVal) {
 	}
 
 	if sval.val != nil {
-		vl := sval.val.asValue()
+		vl := sval.val.AsValue()
 		tval, isTime := vl.(time.Time)
 		var t string
 		if isTime {
@@ -314,24 +316,25 @@ func (h *HashCollector) Append(sval SVal) {
 // }
 
 type SimpleEnvelopeProps struct {
+	Id            string
+	Src           string
+	Dst           []string
+	T             interface{} // int64 || time.Time
+	Ttl           int
+	Data          interface{} // PayloadT1
+	JsonProp      *JsonProps
+	TimeGenerator TimeGenerator
+}
+
+type SimpleEnvelopeInternal struct {
 	Id       string
 	Src      string
 	Dst      []string
-	T        time.Time
+	T        int64
 	Ttl      int
 	Data     PayloadT1
 	JsonProp *JsonProps
 }
-
-// type Envelope struct {
-// 	V    string   `json:"v"`
-// 	Id   string   `json:"id"`
-// 	Src  string   `json:"src"`
-// 	Dst  []string `json:"dst"`
-// 	T    int64    `json:"t"`
-// 	Ttl  int      `json:"ttl"`
-// 	Data Payload  `json:"data"`
-// }
 
 type JsonHash struct {
 	JsonStr *string
@@ -349,19 +352,57 @@ func (*realTimer) Now() time.Time {
 }
 
 type SimpleEnvelope struct {
-	simpleEnvelopeProps *SimpleEnvelopeProps
+	simpleEnvelopeProps *SimpleEnvelopeInternal
 	envJsonStrings      []string
 	envJsonString       *string
 	envJsonC            *JsonCollector
 	Envelope            *EnvelopeT
 	DataJsonHash        *JsonHash
-	timeGenerator       TimeGenerator
 }
 
 func NewSimpleEnvelope(env *SimpleEnvelopeProps) *SimpleEnvelope {
+	var tstmp int64
+	if env.TimeGenerator == nil {
+		env.TimeGenerator = &realTimer{}
+	}
+	switch v := env.T.(type) {
+	case int:
+		tstmp = int64(v)
+	case int64:
+		tstmp = v
+		// v is an int here, so e.g. v + 1 is possible.
+	case float64:
+		tstmp = int64(v)
+	case time.Time:
+		tstmp = v.UnixMilli()
+	case nil:
+		tstmp = env.TimeGenerator.Now().UnixMilli()
+	default:
+		panic(fmt.Sprintf("unhandled Type:%t", v))
+	}
+
+	payt := PayloadT1{}
+	switch v := env.Data.(type) {
+	case map[string]interface{}:
+		FromDictPayloadT1(v, &payt)
+	case PayloadT1:
+		payt = v
+	case PayloadT:
+		payt = PayloadT1(v)
+	default:
+		panic("unhandled Type")
+	}
+	sei := SimpleEnvelopeInternal{
+		Id:       env.Id,
+		Src:      env.Src,
+		Dst:      env.Dst,
+		T:        tstmp,
+		Ttl:      env.Ttl,
+		Data:     payt,
+		JsonProp: env.JsonProp,
+	}
 	se := &SimpleEnvelope{
-		simpleEnvelopeProps: env,
-		timeGenerator:       &realTimer{},
+		simpleEnvelopeProps: &sei,
 		// envJsonStrings:      make([]string, 1000),
 	}
 	se.envJsonC = NewJsonCollector(func(part string) {
@@ -399,7 +440,7 @@ func (s *SimpleEnvelope) toDataJson() *JsonHash {
 			dataJsonC.Append(sval)
 		}
 	}
-	sortKeys(s.simpleEnvelopeProps.Data.Data, dataProcessor)
+	SortKeys(s.simpleEnvelopeProps.Data.Data, dataProcessor)
 	var hashVal *string
 	if dataHashC != nil {
 		hash := dataHashC.Digest()
@@ -413,14 +454,9 @@ func (s *SimpleEnvelope) toDataJson() *JsonHash {
 
 }
 
-func (s *SimpleEnvelope) Lazy() *SimpleEnvelope {
+func (s *SimpleEnvelope) lazy() *SimpleEnvelope {
 	s.DataJsonHash = s.toDataJson()
-	tstmp := s.simpleEnvelopeProps.T
-	if tstmp.IsZero() {
-		tstmp = s.timeGenerator.Now()
-	}
-	t := tstmp.UnixMilli()
-
+	t := s.simpleEnvelopeProps.T
 	id := s.simpleEnvelopeProps.Id
 	if id == "" {
 		id = fmt.Sprintf("%v-%v", t, *s.DataJsonHash.Hash)
@@ -442,7 +478,7 @@ func (s *SimpleEnvelope) Lazy() *SimpleEnvelope {
 		},
 	}
 
-	sortKeys(*envelope, func(sval SVal) {
+	SortKeys(*envelope, func(sval SVal) {
 		oval := sval
 		// /data/date
 
@@ -473,12 +509,12 @@ func (s *SimpleEnvelope) Lazy() *SimpleEnvelope {
 
 func (s *SimpleEnvelope) AsJson() *string {
 	if s.envJsonString == nil {
-		str := strings.Join(s.Lazy().envJsonStrings, "")
+		str := strings.Join(s.lazy().envJsonStrings, "")
 		s.envJsonString = &str
 	}
 	return s.envJsonString
 }
 
 func (s *SimpleEnvelope) AsEnvelope() *EnvelopeT {
-	return s.Lazy().Envelope
+	return s.lazy().Envelope
 }

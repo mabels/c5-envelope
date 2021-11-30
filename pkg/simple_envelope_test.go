@@ -23,38 +23,71 @@ func (s *SimpleEnvelopeSuite) SetupTest() {
 	s.mockedSvalFn = &SvalFnMock{}
 }
 
+var mtimer = &mockedTimer{}
+
 // ####################
 // ## sortKeys tests ##
 // ####################
+func (s *SimpleEnvelopeSuite) TestSimpleTAsLiteral() {
+	props := SimpleEnvelopeProps{
+		T: 4711,
+		Data: map[string]interface{}{
+			"kind": "Kind",
+			"data": map[string]interface{}{"Hallo": 1},
+		},
+	}
+	n := NewSimpleEnvelope(&props)
+	assert.Equal(s.T(), n.AsEnvelope().Data.Kind, "Kind")
+	assert.Equal(s.T(), n.AsEnvelope().Data.Data, map[string]interface{}{"Hallo": 1})
+	assert.Equal(s.T(), n.AsEnvelope().T, float64(4711))
+}
+
+func (s *SimpleEnvelopeSuite) TestSimpleTAsObj() {
+	now := time.Now()
+	pay := PayloadT{}
+	FromDictPayloadT(map[string]interface{}{
+		"kind": "Kind",
+		"data": map[string]interface{}{"Hallo": 1},
+	}, &pay)
+	props := SimpleEnvelopeProps{
+		T:    now,
+		Data: pay,
+	}
+	n := NewSimpleEnvelope(&props)
+	assert.Equal(s.T(), n.AsEnvelope().Data.Kind, "Kind")
+	assert.Equal(s.T(), n.AsEnvelope().Data.Data, map[string]interface{}{"Hallo": 1})
+	assert.Equal(s.T(), n.AsEnvelope().T, float64(now.UnixMilli()))
+}
+
 func (s *SimpleEnvelopeSuite) TestSortWithOutWithString() {
 	strValue := "string"
 	s.mockedSvalFn.On("Execute", mock.MatchedBy(func(sVal SVal) bool {
-		return assert.Equal(s.T(), strValue, (sVal.val.(JsonValType)).val)
+		return assert.Equal(s.T(), strValue, (sVal.val.(JsonValType)).Val)
 	}))
-	sortKeys(strValue, s.mockedSvalFn.Execute)
+	SortKeys(strValue, s.mockedSvalFn.Execute)
 }
 
 func (s *SimpleEnvelopeSuite) TestSortWithOutWithDate() {
 	t := time.Now()
 	s.mockedSvalFn.On("Execute", mock.MatchedBy(func(sVal SVal) bool {
-		return assert.Equal(s.T(), t, (sVal.val.(JsonValType)).val)
+		return assert.Equal(s.T(), t, (sVal.val.(JsonValType)).Val)
 	}))
-	sortKeys(t, s.mockedSvalFn.Execute)
+	SortKeys(t, s.mockedSvalFn.Execute)
 }
 
 func (s *SimpleEnvelopeSuite) TestSortWithOutWithNumber() {
 	n := 78
 	s.mockedSvalFn.On("Execute", mock.MatchedBy(func(sVal SVal) bool {
-		return assert.Equal(s.T(), n, (sVal.val.(JsonValType)).val)
+		return assert.Equal(s.T(), n, (sVal.val.(JsonValType)).Val)
 	}))
-	sortKeys(n, s.mockedSvalFn.Execute)
+	SortKeys(n, s.mockedSvalFn.Execute)
 }
 
 func (s *SimpleEnvelopeSuite) TestSortWithOutWithBoolean() {
 	s.mockedSvalFn.On("Execute", mock.MatchedBy(func(sVal SVal) bool {
-		return assert.Equal(s.T(), true, (sVal.val.(JsonValType)).val)
+		return assert.Equal(s.T(), true, (sVal.val.(JsonValType)).Val)
 	}))
-	sortKeys(true, s.mockedSvalFn.Execute)
+	SortKeys(true, s.mockedSvalFn.Execute)
 }
 
 func (s *SimpleEnvelopeSuite) TestSortWithOutWithArrayOfEmpty() {
@@ -72,7 +105,7 @@ func (s *SimpleEnvelopeSuite) TestSortWithOutWithArrayOfEmpty() {
 		funcCallIdx++
 		return result
 	}))
-	sortKeys(emptySlice, s.mockedSvalFn.Execute)
+	SortKeys(emptySlice, s.mockedSvalFn.Execute)
 }
 
 func (s *SimpleEnvelopeSuite) TestSortWithOutWithArrayOf_1_2() {
@@ -84,9 +117,9 @@ func (s *SimpleEnvelopeSuite) TestSortWithOutWithArrayOf_1_2() {
 			result = assert.Equal(s.T(), nil, sVal.val)
 			result = result && assert.Equal(s.T(), ARRAY_START, sVal.outState.String())
 		} else if funcCallIdx == 2 {
-			result = assert.Equal(s.T(), ar[0], (sVal.val.(JsonValType)).val)
+			result = assert.Equal(s.T(), ar[0], (sVal.val.(JsonValType)).Val)
 		} else if funcCallIdx == 3 {
-			result = assert.Equal(s.T(), ar[1], (sVal.val.(JsonValType)).val)
+			result = assert.Equal(s.T(), ar[1], (sVal.val.(JsonValType)).Val)
 		} else if funcCallIdx == 4 {
 			result = assert.Equal(s.T(), nil, sVal.val)
 			result = result && assert.Equal(s.T(), ARRAY_END, sVal.outState.String())
@@ -94,7 +127,7 @@ func (s *SimpleEnvelopeSuite) TestSortWithOutWithArrayOf_1_2() {
 		funcCallIdx++
 		return result
 	}))
-	sortKeys(ar, s.mockedSvalFn.Execute)
+	SortKeys(ar, s.mockedSvalFn.Execute)
 }
 
 func (s *SimpleEnvelopeSuite) TestSortWithOutWithArrayOf_1_2_3_4() {
@@ -106,21 +139,21 @@ func (s *SimpleEnvelopeSuite) TestSortWithOutWithArrayOf_1_2_3_4() {
 			result = assert.Equal(s.T(), nil, sVal.val)
 			result = result && assert.Equal(s.T(), ARRAY_START, sVal.outState.String())
 		} else if funcCallIdx == 3 {
-			result = assert.Equal(s.T(), ar[0][0], (sVal.val.(JsonValType)).val)
+			result = assert.Equal(s.T(), ar[0][0], (sVal.val.(JsonValType)).Val)
 		} else if funcCallIdx == 4 {
-			result = assert.Equal(s.T(), ar[0][1], (sVal.val.(JsonValType)).val)
+			result = assert.Equal(s.T(), ar[0][1], (sVal.val.(JsonValType)).Val)
 		} else if funcCallIdx == 5 || funcCallIdx == 9 || funcCallIdx == 10 {
 			result = assert.Equal(s.T(), nil, sVal.val)
 			result = result && assert.Equal(s.T(), ARRAY_END, sVal.outState.String())
 		} else if funcCallIdx == 7 {
-			result = assert.Equal(s.T(), ar[1][0], (sVal.val.(JsonValType)).val)
+			result = assert.Equal(s.T(), ar[1][0], (sVal.val.(JsonValType)).Val)
 		} else if funcCallIdx == 8 {
-			result = assert.Equal(s.T(), ar[1][1], (sVal.val.(JsonValType)).val)
+			result = assert.Equal(s.T(), ar[1][1], (sVal.val.(JsonValType)).Val)
 		}
 		funcCallIdx++
 		return result
 	}))
-	sortKeys(ar, s.mockedSvalFn.Execute)
+	SortKeys(ar, s.mockedSvalFn.Execute)
 }
 
 func (s *SimpleEnvelopeSuite) TestSortWithOutWithObjOfEmptyObj() {
@@ -138,7 +171,7 @@ func (s *SimpleEnvelopeSuite) TestSortWithOutWithObjOfEmptyObj() {
 		funcCallIdx++
 		return result
 	}))
-	sortKeys(obj, s.mockedSvalFn.Execute)
+	SortKeys(obj, s.mockedSvalFn.Execute)
 }
 
 func (s *SimpleEnvelopeSuite) TestSortWithOutWithObjOfObj_Y_1_X_2() {
@@ -151,11 +184,11 @@ func (s *SimpleEnvelopeSuite) TestSortWithOutWithObjOfObj_Y_1_X_2() {
 		} else if funcCallIdx == 2 {
 			result = assert.Equal(s.T(), "x", sVal.attribute)
 		} else if funcCallIdx == 3 {
-			result = assert.Equal(s.T(), 2, (sVal.val.(JsonValType)).val)
+			result = assert.Equal(s.T(), 2, (sVal.val.(JsonValType)).Val)
 		} else if funcCallIdx == 4 {
 			result = assert.Equal(s.T(), "y", sVal.attribute)
 		} else if funcCallIdx == 5 {
-			result = assert.Equal(s.T(), 1, (sVal.val.(JsonValType)).val)
+			result = assert.Equal(s.T(), 1, (sVal.val.(JsonValType)).Val)
 		} else if funcCallIdx == 6 {
 			result = assert.Equal(s.T(), nil, sVal.val)
 			result = result && assert.Equal(s.T(), OBJECT_END, sVal.outState.String())
@@ -163,7 +196,7 @@ func (s *SimpleEnvelopeSuite) TestSortWithOutWithObjOfObj_Y_1_X_2() {
 		funcCallIdx++
 		return result
 	}))
-	sortKeys(struct {
+	SortKeys(struct {
 		Y int `json:"y"`
 		X int `json:"x"`
 	}{Y: 1, X: 2}, s.mockedSvalFn.Execute)
@@ -181,11 +214,11 @@ func (s *SimpleEnvelopeSuite) TestSortWithOutWithObjOfObj_Y_B_1_A_2() {
 		} else if funcCallIdx == 4 {
 			result = assert.Equal(s.T(), "a", sVal.attribute)
 		} else if funcCallIdx == 5 {
-			result = assert.Equal(s.T(), 2, (sVal.val.(JsonValType)).val)
+			result = assert.Equal(s.T(), 2, (sVal.val.(JsonValType)).Val)
 		} else if funcCallIdx == 6 {
 			result = assert.Equal(s.T(), "b", sVal.attribute)
 		} else if funcCallIdx == 7 {
-			result = assert.Equal(s.T(), 1, (sVal.val.(JsonValType)).val)
+			result = assert.Equal(s.T(), 1, (sVal.val.(JsonValType)).Val)
 		} else if funcCallIdx == 8 || funcCallIdx == 9 {
 			result = assert.Equal(s.T(), nil, sVal.val)
 			result = result && assert.Equal(s.T(), OBJECT_END, sVal.outState.String())
@@ -198,7 +231,7 @@ func (s *SimpleEnvelopeSuite) TestSortWithOutWithObjOfObj_Y_B_1_A_2() {
 		B int `json:"b"`
 		A int `json:"a"`
 	}
-	sortKeys(struct {
+	SortKeys(struct {
 		Y Obj `json:"y"`
 	}{Y: Obj{
 		B: 1,
@@ -215,7 +248,7 @@ func (s *SimpleEnvelopeSuite) TestJSONCollectorEmptyObj() {
 		out += str
 	}, nil)
 	var obj struct{}
-	sortKeys(obj, func(prob SVal) {
+	SortKeys(obj, func(prob SVal) {
 		col.Append(prob)
 	})
 	assert.Equal(s.T(), "{}", out)
@@ -227,7 +260,7 @@ func (s *SimpleEnvelopeSuite) TestJSONCollectorEmptyArray() {
 		out += str
 	}, nil)
 	var emptySlice []int
-	sortKeys(emptySlice, func(prob SVal) {
+	SortKeys(emptySlice, func(prob SVal) {
 		col.Append(prob)
 	})
 	assert.Equal(s.T(), "[]", out)
@@ -245,7 +278,7 @@ func (s *SimpleEnvelopeSuite) TestJSONCollector_X_Y_1_Z_x_Y_Z() {
 	col := NewJsonCollector(func(str string) {
 		out += str
 	}, nil)
-	sortKeys(struct {
+	SortKeys(struct {
 		X Obj      `json:"x"`
 		Y struct{} `json:"y"`
 		Z []int    `json:"z"`
@@ -267,7 +300,7 @@ func (s *SimpleEnvelopeSuite) TestJSONCollectorArray_xx() {
 	col := NewJsonCollector(func(str string) {
 		out += str
 	}, nil)
-	sortKeys([]string{"xx"}, func(prob SVal) {
+	SortKeys([]string{"xx"}, func(prob SVal) {
 		col.Append(prob)
 	})
 	assert.Equal(s.T(), "[\"xx\"]", out)
@@ -278,7 +311,7 @@ func (s *SimpleEnvelopeSuite) TestJSONCollectorArray_1_2() {
 	col := NewJsonCollector(func(str string) {
 		out += str
 	}, nil)
-	sortKeys([]interface{}{1, "2"}, func(prob SVal) {
+	SortKeys([]interface{}{1, "2"}, func(prob SVal) {
 		col.Append(prob)
 	})
 	assert.Equal(s.T(), "[1,\"2\"]", out)
@@ -289,7 +322,7 @@ func (s *SimpleEnvelopeSuite) TestJSONCollector_1_2_A() {
 	col := NewJsonCollector(func(str string) {
 		out += str
 	}, nil)
-	sortKeys([]interface{}{1, []string{"2", "A"}, "E"}, func(prob SVal) {
+	SortKeys([]interface{}{1, []string{"2", "A"}, "E"}, func(prob SVal) {
 		col.Append(prob)
 	})
 	assert.Equal(s.T(), "[1,[\"2\",\"A\"],\"E\"]", out)
@@ -301,7 +334,7 @@ func (s *SimpleEnvelopeSuite) TestJSONCollectorIndent2EmptyObj() {
 		out += str
 	}, NewJsonProps(2, ""))
 	var obj struct{}
-	sortKeys(obj, func(prob SVal) {
+	SortKeys(obj, func(prob SVal) {
 		col.Append(prob)
 	})
 	assert.Equal(s.T(), "{}", out)
@@ -313,7 +346,7 @@ func (s *SimpleEnvelopeSuite) TestJSONCollectorIndent2ArrayEmpty() {
 		out += str
 	}, NewJsonProps(2, ""))
 	var emptySlice []int
-	sortKeys(emptySlice, func(prob SVal) {
+	SortKeys(emptySlice, func(prob SVal) {
 		col.Append(prob)
 	})
 	assert.Equal(s.T(), "[]", out)
@@ -331,7 +364,7 @@ func (s *SimpleEnvelopeSuite) TestJSONCollectorIndent2_X_Y_1_Z_x() {
 	col := NewJsonCollector(func(str string) {
 		out += str
 	}, NewJsonProps(2, ""))
-	sortKeys(struct {
+	SortKeys(struct {
 		X Obj      `json:"x"`
 		Y struct{} `json:"y"`
 		Z []int    `json:"z"`
@@ -353,7 +386,7 @@ func (s *SimpleEnvelopeSuite) TestJSONCollector_Indent2_xx() {
 	col := NewJsonCollector(func(str string) {
 		out += str
 	}, NewJsonProps(2, ""))
-	sortKeys([]string{"xx"}, func(prob SVal) {
+	SortKeys([]string{"xx"}, func(prob SVal) {
 		col.Append(prob)
 	})
 	assert.Equal(s.T(), "[\n  \"xx\"\n]", out)
@@ -364,7 +397,7 @@ func (s *SimpleEnvelopeSuite) TestJSONCollector_Indent2_array_1_2() {
 	col := NewJsonCollector(func(str string) {
 		out += str
 	}, NewJsonProps(2, ""))
-	sortKeys([]interface{}{1, "2"}, func(prob SVal) {
+	SortKeys([]interface{}{1, "2"}, func(prob SVal) {
 		col.Append(prob)
 	})
 	assert.Equal(s.T(), "[\n  1,\n  \"2\"\n]", out)
@@ -375,7 +408,7 @@ func (s *SimpleEnvelopeSuite) TestJSONCollector_1_date444() {
 	col := NewJsonCollector(func(str string) {
 		out += str
 	}, nil)
-	sortKeys([]interface{}{1, time.UnixMilli(444).UTC()}, func(prob SVal) {
+	SortKeys([]interface{}{1, time.UnixMilli(444).UTC()}, func(prob SVal) {
 		col.Append(prob)
 	})
 	assert.Equal(s.T(), "[1,\"1970-01-01T00:00:00.444Z\"]", out)
@@ -386,7 +419,7 @@ func (s *SimpleEnvelopeSuite) TestJSONCollector_1_date444() {
 // #########################
 func (s *SimpleEnvelopeSuite) TestHashCollector_date() {
 	h := NewHashCollector()
-	sortKeys(time.UnixMilli(444).UTC(), func(prob SVal) {
+	SortKeys(time.UnixMilli(444).UTC(), func(prob SVal) {
 		h.Append(prob)
 	})
 	assert.Equal(s.T(), "DzYqv3YaniBJWwqrNBn4534oTe4nL14TqcfVCguf9Yyv", h.Digest())
@@ -394,7 +427,7 @@ func (s *SimpleEnvelopeSuite) TestHashCollector_date() {
 
 func (s *SimpleEnvelopeSuite) TestHashCollector_X_1_Y2() {
 	h := NewHashCollector()
-	sortKeys(struct {
+	SortKeys(struct {
 		X int
 		Y int
 	}{
@@ -414,7 +447,7 @@ func (s *SimpleEnvelopeSuite) TestHashCollector_1() {
 	}
 	var emptySlice []int
 	var emptypObj struct{}
-	sortKeys(struct {
+	SortKeys(struct {
 		X Obj       `json:"x"`
 		Y struct{}  `json:"y"`
 		Z []int     `json:"z"`
@@ -441,7 +474,7 @@ func (s *SimpleEnvelopeSuite) TestHashCollector_2() {
 	}
 	var emptySlice []int
 	var emptypObj struct{}
-	sortKeys(struct {
+	SortKeys(struct {
 		X    Obj       `json:"x"`
 		Y    struct{}  `json:"y"`
 		Z    []int     `json:"z"`
@@ -468,7 +501,7 @@ func (s *SimpleEnvelopeSuite) TestHashCollector_3() {
 	}
 	var emptySlice []int
 	var emptypObj struct{}
-	sortKeys(struct {
+	SortKeys(struct {
 		X    Obj       `json:"x"`
 		Y    struct{}  `json:"y"`
 		Z    []int     `json:"z"`
@@ -495,7 +528,7 @@ func (s *SimpleEnvelopeSuite) TestHashCollector_4() {
 	}
 	var emptySlice []int
 	var emptypObj struct{}
-	sortKeys(struct {
+	SortKeys(struct {
 		X    Obj       `json:"x"`
 		Y    struct{}  `json:"y"`
 		Z    []int     `json:"z"`
@@ -513,7 +546,7 @@ func (s *SimpleEnvelopeSuite) TestHashCollector_4() {
 	})
 
 	h2 := NewHashCollector()
-	sortKeys(struct {
+	SortKeys(struct {
 		Date time.Time `json:"date"`
 		X    Obj       `json:"x"`
 		Y    struct{}  `json:"y"`
@@ -566,7 +599,7 @@ func (s *SimpleEnvelopeSuite) TestHashCollector_3_InternalUpdate() {
 		Date: time.UnixMilli(444).UTC(),
 	}
 	collector := &HashCollector{mck}
-	sortKeys(t, func(prob SVal) {
+	SortKeys(t, func(prob SVal) {
 		collector.Append(prob)
 	})
 
@@ -590,7 +623,7 @@ func (s *SimpleEnvelopeSuite) TestSimpleHash() {
 	}
 
 	hashC := NewHashCollector()
-	sortKeys(KindData{
+	SortKeys(KindData{
 		Kind: "test",
 		Data: Data{
 			Name: "object",
@@ -645,11 +678,11 @@ func (s *SimpleEnvelopeSuite) TestSerializationWithHash() {
 			Kind: "test",
 			Data: typ.ToDict(),
 		},
-		Dst: []string{},
-		Ttl: 10,
+		Dst:           []string{},
+		Ttl:           10,
+		TimeGenerator: mtimer,
 	}
 	se := NewSimpleEnvelope(props)
-	se.timeGenerator = &mockedTimer{}
 	assert.JSONEq(s.T(), *se.AsJson(), `{"data":{"data":{"date":"2021-05-20","name":"object"},"kind":"test"},"dst":[],"id":"1624140000000-BbYxQMurpUmj1W6E4EwYM79Rm3quSz1wwtNZDSsFt1bp","src":"test case","t":1624140000000,"ttl":10,"v":"A"}`)
 }
 
@@ -670,12 +703,12 @@ func (s *SimpleEnvelopeSuite) TestSerializationWithIndent() {
 			Kind: "test",
 			Data: typ.ToDict(),
 		},
-		Dst:      []string{},
-		Ttl:      10,
-		JsonProp: NewJsonProps(2, ""),
+		Dst:           []string{},
+		Ttl:           10,
+		JsonProp:      NewJsonProps(2, ""),
+		TimeGenerator: mtimer,
 	}
 	se := NewSimpleEnvelope(props)
-	se.timeGenerator = &mockedTimer{}
 	assert.Equal(s.T(), *se.AsJson(), out.String())
 }
 
@@ -687,26 +720,26 @@ func (s *SimpleEnvelopeSuite) TestMissingDataInEnvelope() {
 			Kind: "kind",
 			Data: typ.ToDict(),
 		},
+		TimeGenerator: mtimer,
 	}
 	se := NewSimpleEnvelope(message)
-	se.timeGenerator = &mockedTimer{}
 
 	var ref EnvelopeT
 	assert.NoError(s.T(), json.Unmarshal([]byte(*se.AsJson()), &ref))
 
 	env := NewSimpleEnvelope(&SimpleEnvelopeProps{
-		Id:       ref.ID,
-		Src:      ref.Src,
-		Dst:      ref.Dst,
-		T:        time.UnixMilli(int64(ref.T)),
-		Ttl:      int(ref.TTL),
-		Data:     ref.Data,
-		JsonProp: nil,
+		Id:            ref.ID,
+		Src:           ref.Src,
+		Dst:           ref.Dst,
+		T:             time.UnixMilli(int64(ref.T)),
+		Ttl:           int(ref.TTL),
+		Data:          ref.Data,
+		JsonProp:      nil,
+		TimeGenerator: mtimer,
 	})
-	env.timeGenerator = &mockedTimer{}
 
 	envData := env.AsEnvelope()
-	assert.Equal(s.T(), message.Data.Kind, envData.Data.Kind)
+	assert.Equal(s.T(), message.Data.(PayloadT1).Kind, envData.Data.Kind)
 
 	yEnv := EnvelopeT{}
 	ok := FromDictEnvelopeT(env.AsEnvelope().ToDict(), &yEnv)
