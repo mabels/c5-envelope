@@ -53,6 +53,9 @@ jobs:
         npm run build
         npm run test
         npm publish --otp=$(neckless kv ls --onlyValue "NPM_TOTP@Totp()")
+        echo "push go latest"
+        git tag -f latest
+        git push -f origin latest
 
     - uses: actions/setup-python@v2
       with:

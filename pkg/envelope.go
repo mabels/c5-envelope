@@ -146,14 +146,77 @@ func FromDictEnvelopeT(data map[string]interface{}, r *EnvelopeT) error {
 			return err
 		}
 	}
-	r.Dst = make([]string, len(data["dst"].([]string)))
-	for idx, i := range data["dst"].([]string) {
-		r.Dst[idx] = i
+	switch v := data["dst"].(type) {
+		case []interface{}: {
+			r.Dst= make([]string, len(v))
+			for idx, i := range v {
+				r.Dst[idx] = i.(string)
+			}
+		}
+		default: {
+			return errors.New("unknown array type")
+		}
 	}
 	r.ID = data["id"].(string)
 	r.Src = data["src"].(string)
-	r.T = data["t"].(float64)
-	r.TTL = data["ttl"].(float64)
+	switch v := data["t"].(type) {
+		case int: {
+			r.T = float64(v)
+		}
+		case int32: {
+			r.T = float64(v)
+		}
+		case int64: {
+			r.T = float64(v)
+		}
+		case uint: {
+			r.T = float64(v)
+		}
+		case uint32: {
+			r.T = float64(v)
+		}
+		case uint64: {
+			r.T = float64(v)
+		}
+		case float32: {
+			r.T = float64(v)
+		}
+		case float64: {
+			r.T = float64(v)
+		}
+		default: {
+			return errors.New("unknown number coerces")
+		}
+	}
+	switch v := data["ttl"].(type) {
+		case int: {
+			r.TTL = float64(v)
+		}
+		case int32: {
+			r.TTL = float64(v)
+		}
+		case int64: {
+			r.TTL = float64(v)
+		}
+		case uint: {
+			r.TTL = float64(v)
+		}
+		case uint32: {
+			r.TTL = float64(v)
+		}
+		case uint64: {
+			r.TTL = float64(v)
+		}
+		case float32: {
+			r.TTL = float64(v)
+		}
+		case float64: {
+			r.TTL = float64(v)
+		}
+		default: {
+			return errors.New("unknown number coerces")
+		}
+	}
 	{
 		var err error
 		r.V, err = FromV(data["v"].(string))
@@ -262,7 +325,35 @@ func (r *SampleY) ToDict() map[string]interface{} {
 }
 
 func FromDictSampleY(data map[string]interface{}, r *SampleY) error {
-	r.Y = data["y"].(float64)
+	switch v := data["y"].(type) {
+		case int: {
+			r.Y = float64(v)
+		}
+		case int32: {
+			r.Y = float64(v)
+		}
+		case int64: {
+			r.Y = float64(v)
+		}
+		case uint: {
+			r.Y = float64(v)
+		}
+		case uint32: {
+			r.Y = float64(v)
+		}
+		case uint64: {
+			r.Y = float64(v)
+		}
+		case float32: {
+			r.Y = float64(v)
+		}
+		case float64: {
+			r.Y = float64(v)
+		}
+		default: {
+			return errors.New("unknown number coerces")
+		}
+	}
 	return nil
 }
 
