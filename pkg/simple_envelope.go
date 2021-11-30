@@ -316,22 +316,22 @@ func (h *HashCollector) Append(sval SVal) {
 // }
 
 type SimpleEnvelopeProps struct {
-	Id            string
+	ID            string
 	Src           string
 	Dst           []string
 	T             interface{} // int64 || time.Time
-	Ttl           int
+	TTL           int
 	Data          interface{} // PayloadT1
 	JsonProp      *JsonProps
 	TimeGenerator TimeGenerator
 }
 
 type SimpleEnvelopeInternal struct {
-	Id       string
+	ID       string
 	Src      string
 	Dst      []string
 	T        int64
-	Ttl      int
+	TTL      int
 	Data     PayloadT1
 	JsonProp *JsonProps
 }
@@ -393,11 +393,11 @@ func NewSimpleEnvelope(env *SimpleEnvelopeProps) *SimpleEnvelope {
 		panic("unhandled Type")
 	}
 	sei := SimpleEnvelopeInternal{
-		Id:       env.Id,
+		ID:       env.ID,
 		Src:      env.Src,
 		Dst:      env.Dst,
 		T:        tstmp,
-		Ttl:      env.Ttl,
+		TTL:      env.TTL,
 		Data:     payt,
 		JsonProp: env.JsonProp,
 	}
@@ -429,7 +429,7 @@ func (s *SimpleEnvelope) toDataJson() *JsonHash {
 	}, jpr)
 	var dataHashC *HashCollector
 	var dataProcessor SvalFn
-	if s.simpleEnvelopeProps.Id != "" {
+	if s.simpleEnvelopeProps.ID != "" {
 		dataProcessor = func(sval SVal) {
 			dataJsonC.Append(sval)
 		}
@@ -457,12 +457,12 @@ func (s *SimpleEnvelope) toDataJson() *JsonHash {
 func (s *SimpleEnvelope) lazy() *SimpleEnvelope {
 	s.DataJsonHash = s.toDataJson()
 	t := s.simpleEnvelopeProps.T
-	id := s.simpleEnvelopeProps.Id
+	id := s.simpleEnvelopeProps.ID
 	if id == "" {
 		id = fmt.Sprintf("%v-%v", t, *s.DataJsonHash.Hash)
 	}
 
-	ttl := s.simpleEnvelopeProps.Ttl
+	ttl := s.simpleEnvelopeProps.TTL
 	if ttl == 0 {
 		ttl = 10
 	}

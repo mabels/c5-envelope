@@ -646,7 +646,7 @@ func (s *SimpleEnvelopeSuite) TestSerialization() {
 	}, &typ)
 	// s.Assertions.Equal(typ.ToDict(), []string{})
 	props := &SimpleEnvelopeProps{
-		Id:  "1624140000000-4a2a6fb97b3afe6a7ca4c13457c441664c7f6a6c2ea7782e1f2dea384cf97cb8",
+		ID:  "1624140000000-4a2a6fb97b3afe6a7ca4c13457c441664c7f6a6c2ea7782e1f2dea384cf97cb8",
 		Src: "test case",
 		Data: PayloadT1{
 			Data: typ.ToDict(),
@@ -654,7 +654,7 @@ func (s *SimpleEnvelopeSuite) TestSerialization() {
 		},
 		Dst: []string{},
 		T:   time.UnixMilli(444),
-		Ttl: 10,
+		TTL: 10,
 	}
 	se := NewSimpleEnvelope(props)
 	assert.JSONEq(s.T(), *se.AsJson(), `{"data":{"data":{"date":"2021-05-20","name":"object"},"kind":"test"},"dst":[],"id":"1624140000000-4a2a6fb97b3afe6a7ca4c13457c441664c7f6a6c2ea7782e1f2dea384cf97cb8","src":"test case","t":444,"ttl":10,"v":"A"}`)
@@ -679,7 +679,7 @@ func (s *SimpleEnvelopeSuite) TestSerializationWithHash() {
 			Data: typ.ToDict(),
 		},
 		Dst:           []string{},
-		Ttl:           10,
+		TTL:           10,
 		TimeGenerator: mtimer,
 	}
 	se := NewSimpleEnvelope(props)
@@ -704,7 +704,7 @@ func (s *SimpleEnvelopeSuite) TestSerializationWithIndent() {
 			Data: typ.ToDict(),
 		},
 		Dst:           []string{},
-		Ttl:           10,
+		TTL:           10,
 		JsonProp:      NewJsonProps(2, ""),
 		TimeGenerator: mtimer,
 	}
@@ -728,11 +728,11 @@ func (s *SimpleEnvelopeSuite) TestMissingDataInEnvelope() {
 	assert.NoError(s.T(), json.Unmarshal([]byte(*se.AsJson()), &ref))
 
 	env := NewSimpleEnvelope(&SimpleEnvelopeProps{
-		Id:            ref.ID,
+		ID:            ref.ID,
 		Src:           ref.Src,
 		Dst:           ref.Dst,
 		T:             time.UnixMilli(int64(ref.T)),
-		Ttl:           int(ref.TTL),
+		TTL:           int(ref.TTL),
 		Data:          ref.Data,
 		JsonProp:      nil,
 		TimeGenerator: mtimer,
