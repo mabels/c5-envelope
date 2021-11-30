@@ -38,7 +38,7 @@ jobs:
 
     - name: Setup Quicktype
       run: |
-        go clone https://github.com/mabels/quicktype ../quicktype 
+        git clone https://github.com/mabels/quicktype ../quicktype 
         cd ../quicktype 
         git switch golang-from-to-dict
         npm i
