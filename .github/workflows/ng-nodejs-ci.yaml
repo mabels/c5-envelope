@@ -36,6 +36,14 @@ jobs:
        node patch-package.json.js "origin/head/0.0.0-smoke"
        git diff
 
+    - name: Setup Quicktype
+      run: |
+        go clone https://github.com/mabels/quicktype ../quicktype 
+        cd ../quicktype 
+        git switch golang-from-to-dict
+        npm i
+        npm run build:ncc
+
     - name: Build JS Envelope
       run: |
         rm -rf ./dist
