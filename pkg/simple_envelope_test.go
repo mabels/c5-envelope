@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/json"
-	"fmt"
-	"github.com/fatih/structs"
 	"testing"
 	"time"
 
@@ -295,6 +293,21 @@ func (s *SimpleEnvelopeSuite) TestJSONCollector_X_Y_1_Z_x_Y_Z() {
 		col.Append(prob)
 	})
 	assert.Equal(s.T(), "{\"x\":{\"y\":1,\"z\":\"x\"},\"y\":{},\"z\":[]}", out)
+}
+
+func (s *SimpleEnvelopeSuite) TestJSONCollector_Empty_Fieldname_In_JSON_Tag() {
+	out := ""
+	col := NewJsonCollector(func(str string) {
+		out += str
+	}, nil)
+	SortKeys(struct {
+		X int `json:",omitempty"`
+	}{
+		X: 1,
+	}, func(prob SVal) {
+		col.Append(prob)
+	})
+	assert.Equal(s.T(), "{\"X\":1}", out)
 }
 
 func (s *SimpleEnvelopeSuite) TestJSONCollectorArray_xx() {
@@ -712,32 +725,6 @@ func (s *SimpleEnvelopeSuite) TestSerializationWithIndent() {
 	}
 	se := NewSimpleEnvelope(props)
 	assert.Equal(s.T(), *se.AsJson(), out.String())
-}
-
-func (s *SimpleEnvelopeSuite) TestSerializationWithEmptyArray() {
-	type AnpassungBeleg struct {
-		BelegTypId int
-	}
-
-	type ArrayOfAnpassungBeleg struct {
-		Beleg []AnpassungBeleg `json:",omitempty" structs:",omitempty"`
-	}
-
-	type EmptyObj struct {
-		Belege ArrayOfAnpassungBeleg `json:",omitempty"`
-	}
-
-	payloadData := EmptyObj{}
-	msg := &SimpleEnvelopeProps{
-		Src: "test case",
-		Data: PayloadT1{
-			Kind: "kind",
-			Data: structs.Map(payloadData),
-		},
-		TimeGenerator: mtimer,
-	}
-	se := NewSimpleEnvelope(msg)
-	fmt.Println(*se.AsJson())
 }
 
 func (s *SimpleEnvelopeSuite) TestMissingDataInEnvelope() {
