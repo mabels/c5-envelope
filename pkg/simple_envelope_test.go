@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/json"
+	"fmt"
+	"github.com/fatih/structs"
 	"testing"
 	"time"
 
@@ -710,6 +712,32 @@ func (s *SimpleEnvelopeSuite) TestSerializationWithIndent() {
 	}
 	se := NewSimpleEnvelope(props)
 	assert.Equal(s.T(), *se.AsJson(), out.String())
+}
+
+func (s *SimpleEnvelopeSuite) TestSerializationWithEmptyArray() {
+	type AnpassungBeleg struct {
+		BelegTypId int
+	}
+
+	type ArrayOfAnpassungBeleg struct {
+		Beleg []AnpassungBeleg `json:",omitempty" structs:",omitempty"`
+	}
+
+	type EmptyObj struct {
+		Belege ArrayOfAnpassungBeleg `json:",omitempty"`
+	}
+
+	payloadData := EmptyObj{}
+	msg := &SimpleEnvelopeProps{
+		Src: "test case",
+		Data: PayloadT1{
+			Kind: "kind",
+			Data: structs.Map(payloadData),
+		},
+		TimeGenerator: mtimer,
+	}
+	se := NewSimpleEnvelope(msg)
+	fmt.Println(*se.AsJson())
 }
 
 func (s *SimpleEnvelopeSuite) TestMissingDataInEnvelope() {

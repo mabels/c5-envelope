@@ -116,7 +116,11 @@ func SortKeys(e interface{}, out SvalFn, paths ...string) {
 			fieldName := fl.Name
 			t, hasTag := fl.Tag.Lookup("json")
 			if hasTag {
-				fieldName = t
+				vals := strings.Split(t, ",")
+				trimmedVal := strings.TrimSpace(vals[0])
+				if len(trimmedVal) != 0 {
+					fieldName = trimmedVal
+				}
 			}
 			m[fieldName] = valOf.Field(i).Interface()
 			keys = append(keys, fieldName)
