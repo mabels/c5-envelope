@@ -153,8 +153,14 @@ func FromDictEnvelopeT(data map[string]interface{}, r *EnvelopeT) error {
 				r.Dst[idx] = i.(string)
 			}
 		}
+		case []string: {
+			r.Dst= make([]string, len(v))
+			for idx, i := range v {
+				r.Dst[idx] = i
+			}
+		}
 		default: {
-			return errors.New("unknown array type")
+			return errors.New(fmt.Sprintf("unknown array type:%T", v))
 		}
 	}
 	r.ID = data["id"].(string)
@@ -185,7 +191,7 @@ func FromDictEnvelopeT(data map[string]interface{}, r *EnvelopeT) error {
 			r.T = float64(v)
 		}
 		default: {
-			return errors.New("unknown number coerces")
+			return errors.New(fmt.Sprintf("unable to coerce number:%T", v))
 		}
 	}
 	switch v := data["ttl"].(type) {
@@ -214,7 +220,7 @@ func FromDictEnvelopeT(data map[string]interface{}, r *EnvelopeT) error {
 			r.TTL = float64(v)
 		}
 		default: {
-			return errors.New("unknown number coerces")
+			return errors.New(fmt.Sprintf("unable to coerce number:%T", v))
 		}
 	}
 	{
@@ -351,7 +357,7 @@ func FromDictSampleY(data map[string]interface{}, r *SampleY) error {
 			r.Y = float64(v)
 		}
 		default: {
-			return errors.New("unknown number coerces")
+			return errors.New(fmt.Sprintf("unable to coerce number:%T", v))
 		}
 	}
 	return nil
