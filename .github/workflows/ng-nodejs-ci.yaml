@@ -94,6 +94,7 @@ jobs:
     - name: Smoke GO
       run: |
         cd smoke
-        go get github.com/mabels/c5-envelope@$(git rev-parse --short HEAD)
+        go mod init smoke
+        go get github.com/mabels/c5-envelope/pkg@$(git rev-parse --short=12 HEAD)
         go run smoke.go
 
