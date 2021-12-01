@@ -35,6 +35,14 @@ jobs:
        node patch-package.json.js "$GITHUB_REF"
        git diff
 
+    - name: Setup Quicktype
+      run: |
+        git clone https://github.com/mabels/quicktype ../quicktype 
+        cd ../quicktype 
+        git switch golang-from-to-dict
+        npm i
+        npm run build:ncc
+
     - name: Publish C5-Envelope NPM
       env:
         NECKLESS_PRIVKEY: ${{ secrets.NECKLESS_PRIVKEY }}
@@ -53,9 +61,6 @@ jobs:
         npm run build
         npm run test
         npm publish --otp=$(neckless kv ls --onlyValue "NPM_TOTP@Totp()")
-        echo "push go latest"
-        git tag -f latest
-        git push -f origin latest
 
     - uses: actions/setup-python@v2
       with:
@@ -74,4 +79,9 @@ jobs:
         python3 -m src.simple_envelope_test
         python3 -m build
         python3 -m twine upload dist/* -u fastandfearless 
+
+    - name: Publish C5-Envelope latest
+      run: |
+        git tag -f latest
+        git push -f origin latest
 
