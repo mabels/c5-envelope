@@ -315,6 +315,14 @@ func (h *HashCollector) Append(sval SVal) {
 // 	Data interface{} `json:"data"`
 // }
 
+type GeneratorProps struct {
+	SimpleEnvelopeProps *SimpleEnvelopeInternal
+	Hash                *string
+	T                   int64
+}
+
+type IdGeneratorFn func(GeneratorProps) string
+
 type SimpleEnvelopeProps struct {
 	ID            string
 	Src           string
@@ -324,16 +332,18 @@ type SimpleEnvelopeProps struct {
 	Data          interface{} // PayloadT1
 	JsonProp      *JsonProps
 	TimeGenerator TimeGenerator
+	IdGenerator   IdGeneratorFn
 }
 
 type SimpleEnvelopeInternal struct {
-	ID       string
-	Src      string
-	Dst      []string
-	T        int64
-	TTL      int
-	Data     PayloadT1
-	JsonProp *JsonProps
+	ID          string
+	Src         string
+	Dst         []string
+	T           int64
+	TTL         int
+	Data        PayloadT1
+	JsonProp    *JsonProps
+	IdGenerator IdGeneratorFn
 }
 
 type JsonHash struct {
@@ -349,6 +359,14 @@ type realTimer struct{}
 
 func (*realTimer) Now() time.Time {
 	return time.Now()
+}
+
+func THashIdGenerator(props GeneratorProps) string {
+	return fmt.Sprintf("%v-%s", props.T, *props.Hash)
+}
+
+func HashIdGenerator(props GeneratorProps) string {
+	return *props.Hash
 }
 
 type SimpleEnvelope struct {
@@ -392,14 +410,19 @@ func NewSimpleEnvelope(env *SimpleEnvelopeProps) *SimpleEnvelope {
 	default:
 		panic("unhandled Type")
 	}
+	idGenerator := env.IdGenerator
+	if idGenerator == nil {
+		idGenerator = THashIdGenerator
+	}
 	sei := SimpleEnvelopeInternal{
-		ID:       env.ID,
-		Src:      env.Src,
-		Dst:      env.Dst,
-		T:        tstmp,
-		TTL:      env.TTL,
-		Data:     payt,
-		JsonProp: env.JsonProp,
+		ID:          env.ID,
+		Src:         env.Src,
+		Dst:         env.Dst,
+		T:           tstmp,
+		TTL:         env.TTL,
+		Data:        payt,
+		JsonProp:    env.JsonProp,
+		IdGenerator: idGenerator,
 	}
 	se := &SimpleEnvelope{
 		simpleEnvelopeProps: &sei,
@@ -459,7 +482,9 @@ func (s *SimpleEnvelope) lazy() *SimpleEnvelope {
 	t := s.simpleEnvelopeProps.T
 	id := s.simpleEnvelopeProps.ID
 	if id == "" {
-		id = fmt.Sprintf("%v-%v", t, *s.DataJsonHash.Hash)
+		id = s.simpleEnvelopeProps.IdGenerator(
+			GeneratorProps{T: t, Hash: s.DataJsonHash.Hash, SimpleEnvelopeProps: s.simpleEnvelopeProps},
+		)
 	}
 
 	ttl := s.simpleEnvelopeProps.TTL

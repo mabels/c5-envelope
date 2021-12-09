@@ -12,6 +12,12 @@ export interface JsonProps {
   readonly newLine: string;
 }
 
+export interface GeneratorProps<T = unknown> {
+  readonly simpleEnvelopeProps: SimpleEnvelopeProps<T>;
+  readonly hash: string;
+  readonly t: number;
+}
+
 export interface SimpleEnvelopeProps<T = unknown> {
   readonly id?: string;
   readonly src: string;
@@ -20,6 +26,7 @@ export interface SimpleEnvelopeProps<T = unknown> {
   readonly ttl?: number; //Limit the hop count
   readonly data: Payload<T>;
   readonly jsonProp?: Partial<JsonProps>;
+  readonly idGenerator?: (props: GeneratorProps<T>) => string;
 }
 
 type OutputFn = (str: string) => void;
@@ -157,6 +164,14 @@ export interface JsonHash {
   readonly hash?: string;
 }
 
+export function tHashIdGenerator<T>(props: GeneratorProps<T>) {
+  return `${props.t}-${props.hash}`;
+}
+
+export function hashIdGenerator<T>(props: GeneratorProps<T>) {
+  return props.hash;
+}
+
 export class SimpleEnvelope<T> {
   readonly simpleEnvelopeProps: SimpleEnvelopeProps<T>;
   readonly envJsonStrings: string[] = [];
@@ -165,7 +180,10 @@ export class SimpleEnvelope<T> {
   public dataJsonHash?: JsonHash;
 
   constructor(env: SimpleEnvelopeProps<T>) {
-    this.simpleEnvelopeProps = env;
+    this.simpleEnvelopeProps = {
+      ...env,
+      idGenerator: env.idGenerator ? env.idGenerator : tHashIdGenerator
+    }
     this.envJsonC = new JsonCollector(
       (part) => this.envJsonStrings.push(part),
       this.simpleEnvelopeProps.jsonProp
@@ -215,6 +233,7 @@ export class SimpleEnvelope<T> {
       };
     }
     sortKeys(this.simpleEnvelopeProps.data.data, dataProcessor);
+    // da muss das hin
     return {
       jsonStr: dataJsonStrings.join(""),
       hash: dataHashC ? dataHashC.digest() : undefined,
@@ -232,8 +251,9 @@ export class SimpleEnvelope<T> {
     const envelope: Envelope<T> = {
       v: "A",
       id:
-        this.simpleEnvelopeProps.id ||
-        `${t}-${this.dataJsonHash.hash}`,
+        this.simpleEnvelopeProps.id || this.simpleEnvelopeProps.idGenerator!({
+          t, hash: this.dataJsonHash.hash!, simpleEnvelopeProps: this.simpleEnvelopeProps
+          }),
       src: this.simpleEnvelopeProps.src,
       dst: this.simpleEnvelopeProps.dst || [],
       t: t,

@@ -4,7 +4,7 @@ import {
   SimpleEnvelopeProps,
   JsonCollector,
   HashCollector,
-  SimpleEnvelope,
+  SimpleEnvelope, hashIdGenerator,
 } from "./simpleEnvelope";
 import { Envelope } from "../schema/envelope";
 import { Convert, PayloadT } from "./lang/ts/envelope";
@@ -360,6 +360,50 @@ it('missing data in envelope', () => {
   };
   const ref = Convert.toEnvelope(simpleEnvelope(message).asJson());
   expect(simpleEnvelope(ref).asEnvelope().data).toEqual(message.data)
+})
+
+it('simpleEnvelope with id', () => {
+  const payt: PayloadT = Convert.toPayload(JSON.stringify({
+    kind: 'kind',
+    data: { y: 4 }
+  }))
+  const message: SimpleEnvelopeProps = {
+    src: "test case",
+    data: payt,
+    id: "myId",
+    idGenerator: hashIdGenerator
+  };
+  const ref = Convert.toEnvelope(simpleEnvelope(message).asJson());
+  expect(simpleEnvelope(ref).asEnvelope().id).toEqual("myId")
+})
+
+it('simpleEnvelope with default tHashGenerator', () => {
+  const payt: PayloadT = Convert.toPayload(JSON.stringify({
+    kind: 'kind',
+    data: { y: 4 }
+  }))
+  const message: SimpleEnvelopeProps = {
+    src: "test case",
+    data: payt,
+    t: 123,
+    idGenerator: undefined
+  };
+  const ref = Convert.toEnvelope(simpleEnvelope(message).asJson());
+  expect(simpleEnvelope(ref).asEnvelope().id).toEqual("123-GUKeStj4aGQRju7p2Dzf31Qi2d2MVuRCw68H1c8gMCnQ")
+})
+
+it('simpleEnvelope with custom id generator', () => {
+  const payt: PayloadT = Convert.toPayload(JSON.stringify({
+    kind: 'kind',
+    data: { y: 4 }
+  }))
+  const message: SimpleEnvelopeProps = {
+    src: "test case",
+    data: payt,
+    idGenerator: hashIdGenerator
+  };
+  const ref = Convert.toEnvelope(simpleEnvelope(message).asJson());
+  expect(simpleEnvelope(ref).asEnvelope().id).toEqual("GUKeStj4aGQRju7p2Dzf31Qi2d2MVuRCw68H1c8gMCnQ")
 })
 
 afterAll(() => {

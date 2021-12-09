@@ -1,15 +1,12 @@
-
+import copy
 from dataclasses import dataclass
 
 import typing
-# import unittest
-import unittest.mock
 
 from .lang.python.envelope import *
 import json
 from datetime import datetime
 import hashlib
-import math
 from base58 import b58encode
 
 
@@ -17,21 +14,27 @@ class JsonProps:
     indent: int
     newLine: str
 
-    def __init__(self, indent = None, newLine = None) -> None:
+    def __init__(self, indent=None, newLine=None) -> None:
         self.indent = 0 if indent is None else indent
         self.newLine = "\n" if newLine is None else newLine
+
+
+idGeneratorFN = typing.Callable[[any], None]
+
 
 class SimpleEnvelopeProps:
     id: str
     src: str
-    dst: str
-    t: datetime
+    dst: []
+    t: any  # union int | float | datetime
     ttl: int
     data: PayloadT
     jsonProp: JsonProps
-    datetime: datetime
+    api_datetime: datetime
+    idGenerator: idGeneratorFN
 
-    def __init__(self, src, data, id = None, dst = [], t = None, ttl = 10, jsonProp = JsonProps(), datetime = datetime, v = None) -> None:
+    def __init__(self, src, data, id=None, dst=[], t=None, ttl=10, jsonProp=JsonProps(), api_datetime=datetime,
+                 v=None, idGenerator=None) -> None:
         if isinstance(data, PayloadT):
             self.data = data
         else:
@@ -42,7 +45,27 @@ class SimpleEnvelopeProps:
         self.t = t
         self.ttl = ttl
         self.jsonProp = jsonProp
-        self.datetime = datetime
+        self.api_datetime = api_datetime
+        if idGenerator:
+            self.idGenerator = idGenerator
+        else:
+            self.idGenerator = tHashIdGenerator
+
+
+@dataclass
+class GeneratorProps:
+    simpleEnvelopeProps: SimpleEnvelopeProps
+    hash: str
+    t: int
+
+
+def tHashIdGenerator(props: GeneratorProps):
+    return f'{props.t}-{props.hash}'
+
+
+def hashIdGenerator(props: GeneratorProps):
+    return props.hash
+
 
 # type OutputFn = (str: string) => void;
 
@@ -50,13 +73,17 @@ class SimpleEnvelopeProps:
 
 
 class ValType:
-    def toString(): str
-    def asValue(): any
-    def to_dict(): dict
+    def toString(self): str
+
+    def asValue(self): any
+
+    def to_dict(self): dict
+
 
 def jsIsoFormat(val: datetime):
     isoStr = val.isoformat().split(".")
     return f'{isoStr[0]}.{isoStr[1][0:3]}Z'
+
 
 class JsonValType(ValType):
     val: any
@@ -69,18 +96,20 @@ class JsonValType(ValType):
 
     def toString(self):
         val = self.val
-        if isinstance(self.val, float): 
-           if float(self.val) == int(self.val):
-            val = int(self.val)
+        if isinstance(self.val, float):
+            if float(self.val) == int(self.val):
+                val = int(self.val)
         elif isinstance(self.val, datetime):
             val = jsIsoFormat(self.val)
         return json.dumps(val)
         # except Exception as e:
         # print("XXXXXXXX[", self.val, e)
+
     def to_dict(self):
         return {
             'val': self.val
         }
+
 
 class PlainValType(ValType):
     val: str
@@ -113,7 +142,7 @@ class SVal:
     val: any
     outState: OutState
 
-    def __init__(self, attribute = None, val = None, outState = None) -> None:
+    def __init__(self, attribute=None, val=None, outState=None) -> None:
         self.attribute = attribute
         self.val = val
         self.outState = outState
@@ -128,7 +157,9 @@ class SVal:
             ret['outState'] = self.outState.value[0]
         return ret
 
+
 OutputFN = typing.Callable[[str], None]
+
 
 class JsonCollector:
     output: OutputFN
@@ -202,7 +233,7 @@ class JsonCollector:
             self.output(out)
             self.attribute = None
             self.commas[-1] = ","
-        if (sval.attribute):
+        if sval.attribute:
             self.elements[-1] = self.elements[-1] + 1
             self.attribute = json.dumps(
                 sval.attribute) + ":" + (" " if len(self.indent) > 0 else "")
@@ -210,9 +241,9 @@ class JsonCollector:
 
 class HashCollector:
     # readonly hash: crypto.Hash = crypto.createHash("sha256");
-    hash: any # hashlib._Hash
+    hash: any  # hashlib._Hash
 
-    def __init__(self, hash = None) -> None:
+    def __init__(self, hash=None) -> None:
         self.hash = hashlib.new('sha256') if hash is None else hash
 
     def digest(self):
@@ -276,14 +307,16 @@ class SimpleEnvelope:
 
     def __init__(self, env: SimpleEnvelopeProps):
         self.envJsonStrings = []
-        self.simpleEnvelopeProps = env
+        self.simpleEnvelopeProps = copy.copy(env)
+        if env.idGenerator is None:
+            self.simpleEnvelopeProps.idGenerator = tHashIdGenerator
         # self.simpleEnvelopeProps.jsonProp = JsonProps() if self.simpleEnvelopeProps.jsonProp is None else self.simpleEnvelopeProps.jsonProp
         # print(this.simpleEnvelopeProps.jsonProp)
         self.envJsonC = JsonCollector(
             lambda part: self.envJsonStrings.append(part),
             self.simpleEnvelopeProps.jsonProp
         )
-        self.datetime = env.datetime if env.datetime is not None else datetime
+        self.datetime = env.api_datetime if env.api_datetime is not None else datetime
 
     def asDataJson(self):
         return self.dataJsonHash.jsonStr
@@ -308,13 +341,15 @@ class SimpleEnvelope:
         dataHashC: HashCollector = None
         dataProcessor = None
         if self.simpleEnvelopeProps.id is not None:
-            def dataProcessor(sval): return dataJsonC.append(sval)
+            def dataProcessor(sval):
+                return dataJsonC.append(sval)
         else:
             dataHashC = HashCollector()
 
             def my(sval: SVal):
                 dataHashC.append(sval)
                 dataJsonC.append(sval)
+
             dataProcessor = my
 
         sortKeys(self.simpleEnvelopeProps.data.data, dataProcessor)
@@ -328,15 +363,20 @@ class SimpleEnvelope:
         t = 0
         if isinstance(self.simpleEnvelopeProps.t, datetime):
             date = self.simpleEnvelopeProps.t if self.simpleEnvelopeProps.t is not None else self.datetime.now()
-            t = int(date.timestamp()*1000)
+            t = int(date.timestamp() * 1000)
         elif isinstance(self.simpleEnvelopeProps.t, float) or isinstance(self.simpleEnvelopeProps.t, int):
             t = self.simpleEnvelopeProps.t
         else:
-            t = int(self.datetime.now().timestamp()*1000)
+            t = int(self.datetime.now().timestamp() * 1000)
         # print(">>>>>>", self.simpleEnvelopeProps.t.__class__)
         envelope: EnvelopeT = EnvelopeT.from_dict({
             'v': "A",
-            'id': self.simpleEnvelopeProps.id if self.simpleEnvelopeProps.id is not None else f'{t}-{self.dataJsonHash.hash}',
+            'id':
+                self.simpleEnvelopeProps.id if self.simpleEnvelopeProps.id else self.simpleEnvelopeProps.idGenerator(
+                    GeneratorProps(
+                        t=t, hash=self.dataJsonHash.hash, simpleEnvelopeProps=self.simpleEnvelopeProps
+                    )
+                ),
             'src': self.simpleEnvelopeProps.src,
             'dst': self.simpleEnvelopeProps.dst if self.simpleEnvelopeProps.dst is not None else [],
             't': t,
@@ -347,14 +387,17 @@ class SimpleEnvelope:
             }).to_dict()
         }).to_dict()
         envelope['data']['data'] = None
+
         class Processor:
             nextValue: bool
             data: str
             envJsonC: JsonCollector
+
             def __init__(self, data: str, envJsonC: JsonCollector) -> None:
                 self.data = data
                 self.nextValue = False
                 self.envJsonC = envJsonC
+
             def append(self, sval: SVal):
                 oval = sval
                 if sval.attribute == "data":

@@ -755,6 +755,56 @@ func (s *SimpleEnvelopeSuite) TestMissingDataInEnvelope() {
 	assert.EqualValues(s.T(), yVal.Y, mapVal["y"])
 }
 
+func (s *SimpleEnvelopeSuite) TestSimpleEnvelopeWithId() {
+	typ := SampleY{Y: 4}
+	message := &SimpleEnvelopeProps{
+		ID:  "myId",
+		Src: "test case",
+		Data: PayloadT1{
+			Kind: "kind",
+			Data: typ.ToDict(),
+		},
+		TimeGenerator: mtimer,
+		IdGenerator:   HashIdGenerator,
+	}
+	env := NewSimpleEnvelope(message).AsEnvelope()
+
+	assert.Equal(s.T(), env.ID, "myId")
+}
+
+func (s *SimpleEnvelopeSuite) TestSimpleEnvelopeWithDefaultHashGenerator() {
+	typ := SampleY{Y: 4}
+	message := &SimpleEnvelopeProps{
+		T:   123,
+		Src: "test case",
+		Data: PayloadT1{
+			Kind: "kind",
+			Data: typ.ToDict(),
+		},
+		TimeGenerator: mtimer,
+	}
+	env := NewSimpleEnvelope(message).AsEnvelope()
+
+	assert.Equal(s.T(), env.ID, "123-GUKeStj4aGQRju7p2Dzf31Qi2d2MVuRCw68H1c8gMCnQ")
+}
+
+func (s *SimpleEnvelopeSuite) TestSimpleEnvelopeWithCustomIdGenerator() {
+	typ := SampleY{Y: 4}
+	message := &SimpleEnvelopeProps{
+		T:   123,
+		Src: "test case",
+		Data: PayloadT1{
+			Kind: "kind",
+			Data: typ.ToDict(),
+		},
+		TimeGenerator: mtimer,
+		IdGenerator:   HashIdGenerator,
+	}
+	env := NewSimpleEnvelope(message).AsEnvelope()
+
+	assert.Equal(s.T(), env.ID, "GUKeStj4aGQRju7p2Dzf31Qi2d2MVuRCw68H1c8gMCnQ")
+}
+
 func TestSimpleEnvelopeSuite(t *testing.T) {
 	suite.Run(t, new(SimpleEnvelopeSuite))
 }

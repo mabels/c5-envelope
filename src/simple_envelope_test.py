@@ -6,7 +6,8 @@ import unittest.mock
 
 from .lang.python.envelope import EnvelopeT, PayloadT
 
-from .simple_envelope import HashCollector, JsonCollector, JsonProps, SimpleEnvelopeProps, simpleEnvelope, sortKeys
+from .simple_envelope import HashCollector, JsonCollector, JsonProps, SimpleEnvelopeProps, simpleEnvelope, sortKeys, \
+    hashIdGenerator
 
 
 class Mockdatetime:
@@ -63,7 +64,7 @@ class SimpleEnvelopeTest(unittest.TestCase):
             }),
             'dst': [],
             'ttl': 10,
-            'datetime': mockdatetime
+            'api_datetime': mockdatetime
         })
         stringify = '{"data":{"data":{"date":"2021-05-20","name":"object"},"kind":"test"},"dst":[],"id":"1624140000000-BbYxQMurpUmj1W6E4EwYM79Rm3quSz1wwtNZDSsFt1bp\","src":"test case","t":1624140000000,"ttl":10,"v":"A"}'
         self.assertEqual(simpleEnvelope(message).asJson(), stringify)
@@ -81,7 +82,7 @@ class SimpleEnvelopeTest(unittest.TestCase):
             'jsonProp': JsonProps(**{
                 'indent': 2,
             }),
-            'datetime': mockdatetime
+            'api_datetime': mockdatetime
         })
         stringify = json.dumps(
             json.loads(
@@ -323,6 +324,47 @@ class SimpleEnvelopeTest(unittest.TestCase):
         })
         ref = EnvelopeT.from_dict(json.loads(simpleEnvelope(message).asJson()))
         self.assertEqual(simpleEnvelope(SimpleEnvelopeProps(**ref.to_dict())).asEnvelope().data.to_dict(), payt.to_dict())
+
+    def test_simple_envelope_with_id(self):
+        payt: PayloadT = PayloadT.from_dict({
+            'kind': 'kind',
+            'data': { 'y': 4 }
+        })
+        message: SimpleEnvelopeProps = SimpleEnvelopeProps(**{
+            'src': "test case",
+            'data': payt,
+            'id': "myId",
+            'idGenerator': hashIdGenerator
+        })
+        ref = EnvelopeT.from_dict(json.loads(simpleEnvelope(message).asJson()))
+        self.assertEqual(simpleEnvelope(SimpleEnvelopeProps(**ref.to_dict())).asEnvelope().id, "myId")
+
+    def test_simple_envelope_with_default_tHashGenerator(self):
+        payt: PayloadT = PayloadT.from_dict({
+            'kind': 'kind',
+            'data': { 'y': 4 }
+        })
+        message: SimpleEnvelopeProps = SimpleEnvelopeProps(**{
+            'src': "test case",
+            'data': payt,
+            't': 123,
+            'idGenerator': None
+        })
+        ref = EnvelopeT.from_dict(json.loads(simpleEnvelope(message).asJson()))
+        self.assertEqual(simpleEnvelope(SimpleEnvelopeProps(**ref.to_dict())).asEnvelope().id, "123-GUKeStj4aGQRju7p2Dzf31Qi2d2MVuRCw68H1c8gMCnQ")
+
+    def test_simple_envelope_with_custom_id_generator(self):
+        payt: PayloadT = PayloadT.from_dict({
+            'kind': 'kind',
+            'data': { 'y': 4 }
+        })
+        message: SimpleEnvelopeProps = SimpleEnvelopeProps(**{
+            'src': "test case",
+            'data': payt,
+            'idGenerator': hashIdGenerator
+        })
+        ref = EnvelopeT.from_dict(json.loads(simpleEnvelope(message).asJson()))
+        self.assertEqual(simpleEnvelope(SimpleEnvelopeProps(**ref.to_dict())).asEnvelope().id, "GUKeStj4aGQRju7p2Dzf31Qi2d2MVuRCw68H1c8gMCnQ")
 
 
 if __name__ == '__main__':
