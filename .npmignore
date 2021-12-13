@@ -8,6 +8,15 @@
 *.pyc
 *.egg-info
 
+smoke/
+pkg/
+src/
+
+go.mod
+go.sum
+jest.config.js
+requirements.txt
+
 .neckless
 .github/
 /lang

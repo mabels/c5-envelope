@@ -73,7 +73,7 @@ jobs:
       run: |
         rm -rf ./dist
         eval $(neckless kv  ls  --shKeyValue --ghAddMask TWINE_PASSWORD)
-        npm run generate-python
+        npm run generate:python
         python3 --version
         python3 -m pip install --upgrade -r requirements.txt
         python3 -m src.simple_envelope_test
