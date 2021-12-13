@@ -1,39 +1,28 @@
-import copy
+from base58 import b58encode
 from dataclasses import dataclass
-
-import typing
-
-from .lang.python.envelope import *
 import json
 from datetime import datetime
 import hashlib
-from base58 import b58encode
+import typing
 
+import object_graph_streamer as ogs
 
-class JsonProps:
-    indent: int
-    newLine: str
-
-    def __init__(self, indent=None, newLine=None) -> None:
-        self.indent = 0 if indent is None else indent
-        self.newLine = "\n" if newLine is None else newLine
-
+from .lang.python.envelope import *
 
 idGeneratorFN = typing.Callable[[any], None]
-
 
 class SimpleEnvelopeProps:
     id: str
     src: str
-    dst: []
+    dst: typing.List[str]
     t: any  # union int | float | datetime
     ttl: int
     data: PayloadT
-    jsonProp: JsonProps
+    jsonProp: ogs.JsonProps
     api_datetime: datetime
     idGenerator: idGeneratorFN
 
-    def __init__(self, src, data, id=None, dst=[], t=None, ttl=10, jsonProp=JsonProps(), api_datetime=datetime,
+    def __init__(self, src, data, id=None, dst=[], t=None, ttl=10, jsonProp=ogs.JsonProps(), api_datetime=datetime,
                  v=None, idGenerator=None) -> None:
         if isinstance(data, PayloadT):
             self.data = data
@@ -166,11 +155,11 @@ class JsonCollector:
     indent: str
     commas: list[str]
     elements: list[int]
-    props: JsonProps
+    props: ogs.JsonProps
     nextLine: str
     attribute: str
 
-    def __init__(self, output: OutputFN, props: JsonProps = JsonProps()):
+    def __init__(self, output: OutputFN, props: ogs.JsonProps = ogs.JsonProps()):
         self.output = output
         self.props = props
         self.indent = (" " * self.props.indent)
@@ -307,7 +296,12 @@ class SimpleEnvelope:
 
     def __init__(self, env: SimpleEnvelopeProps):
         self.envJsonStrings = []
-        self.simpleEnvelopeProps = copy.copy(env)
+        self.simpleEnvelopeProps = SimpleEnvelopeProps(
+            src=env.src, data=env.data,
+            id=env.id, dst=env.dst,
+            t=env.t, ttl=env.ttl, jsonProp=env.jsonProp,
+            idGenerator=env.idGenerator
+        )
         if env.idGenerator is None:
             self.simpleEnvelopeProps.idGenerator = tHashIdGenerator
         # self.simpleEnvelopeProps.jsonProp = JsonProps() if self.simpleEnvelopeProps.jsonProp is None else self.simpleEnvelopeProps.jsonProp
@@ -334,7 +328,7 @@ class SimpleEnvelope:
 
     def toDataJson(self) -> JsonHash:
         dataJsonStrings: list[str] = []
-        dataJsonC = JsonCollector(lambda part: dataJsonStrings.append(part), JsonProps(**{
+        dataJsonC = JsonCollector(lambda part: dataJsonStrings.append(part), ogs.JsonProps(**{
             'indent': self.simpleEnvelopeProps.jsonProp.indent,
             'newLine': "\n" + (" " * (self.simpleEnvelopeProps.jsonProp.indent * 2))
         }))

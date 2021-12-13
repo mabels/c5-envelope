@@ -1,16 +1,6 @@
 import { Envelope } from "../schema/envelope";
 import { Payload } from "../schema/payload";
-import * as crypto from "crypto";
-import baseX from "base-x";
-
-const bs58 = baseX(
-  "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
-);
-
-export interface JsonProps {
-  readonly indent: number;
-  readonly newLine: string;
-}
+import * as ogs from "object-graph-streamer";
 
 export interface GeneratorProps<T = unknown> {
   readonly simpleEnvelopeProps: SimpleEnvelopeProps<T>;
@@ -25,143 +15,8 @@ export interface SimpleEnvelopeProps<T = unknown> {
   readonly t?: Date | number;
   readonly ttl?: number; //Limit the hop count
   readonly data: Payload<T>;
-  readonly jsonProp?: Partial<JsonProps>;
+  readonly jsonProp?: Partial<ogs.JsonProps>;
   readonly idGenerator?: (props: GeneratorProps<T>) => string;
-}
-
-type OutputFn = (str: string) => void;
-
-export class JsonCollector {
-  readonly output: OutputFn;
-  readonly indent: string;
-  readonly commas: string[] = [""];
-  readonly elements: number[] = [0];
-  readonly props: JsonProps;
-  readonly nextLine: string;
-  attribute?: string;
-
-  constructor(output: OutputFn, props: Partial<JsonProps> = {}) {
-    this.output = output;
-    this.props = {
-      indent: props.indent || 0,
-      newLine: props.newLine || "\n",
-      ...props,
-    };
-    this.indent = Array(this.props.indent).fill(" ").join("");
-    this.nextLine = this.props.indent ? this.props.newLine : "";
-  }
-
-  public get suffix(): string {
-    if (this.elements[this.elements.length - 1]) {
-      return (
-        this.nextLine +
-        Array(this.commas.length - 1)
-          .fill(this.indent)
-          .join("")
-      );
-    } else {
-      return "";
-    }
-  }
-
-  public append(sval: SVal) {
-    if (sval.outState) {
-      switch (sval.outState) {
-        case OutState.ARRAY_START:
-          this.output(
-            this.commas[this.commas.length - 1] +
-              this.suffix +
-              (this.attribute || "") +
-              "["
-          );
-          this.attribute = undefined;
-          this.commas[this.commas.length - 1] = ",";
-          this.commas.push("");
-          this.elements.push(0);
-          break;
-
-        case OutState.ARRAY_END:
-          this.commas.pop();
-          this.output(this.suffix + "]");
-          this.elements.pop();
-          break;
-
-        case OutState.OBJECT_START:
-          this.output(
-            this.commas[this.commas.length - 1] +
-              this.suffix +
-              (this.attribute || "") +
-              "{"
-          );
-          this.attribute = undefined;
-          this.commas[this.commas.length - 1] = ",";
-          this.commas.push("");
-          this.elements.push(0);
-          break;
-
-        case OutState.OBJECT_END:
-          this.commas.pop();
-          this.output(this.suffix + "}");
-          this.elements.pop();
-          break;
-      }
-    }
-    if (sval.val) {
-      ++this.elements[this.elements.length - 1];
-      const out =
-        this.commas[this.commas.length - 1] +
-        this.suffix +
-        (this.attribute || "") +
-        sval.val.toString();
-      // console.log(this.commas, this.attribute, sval.val, out);
-      this.output(out);
-      this.attribute = undefined;
-      this.commas[this.commas.length - 1] = ",";
-      // }
-    }
-    if (sval.attribute) {
-      ++this.elements[this.elements.length - 1];
-      this.attribute =
-        JSON.stringify(sval.attribute) + ":" + (this.indent.length ? " " : "");
-    }
-  }
-}
-
-export class HashCollector {
-  readonly hash: crypto.Hash = crypto.createHash("sha256");
-
-  constructor() {}
-
-  public digest() {
-    return bs58.encode(this.hash.digest());
-  }
-
-  public append(sval: SVal) {
-    if (sval.outState) {
-      return;
-    }
-    if (sval.attribute) {
-      const tmp = Buffer.from(sval.attribute).toString('utf-8')
-      // console.log('attribute=', tmp)
-      this.hash.update(tmp);
-    }
-    if (sval.val) {
-      let out: any = sval.val.asValue();
-      if (out instanceof Date) {
-        out = out.toISOString()
-      } else {
-        out = "" + out;
-      }
-      // console.log('val=', out)
-      // We need some room for the types
-      this.hash.update(Buffer.from(out).toString("utf-8"));
-    }
-  }
-}
-
-export interface JsonHash {
-  readonly jsonStr: string;
-  readonly hash?: string;
 }
 
 export function tHashIdGenerator<T>(props: GeneratorProps<T>) {
@@ -175,16 +30,16 @@ export function hashIdGenerator<T>(props: GeneratorProps<T>) {
 export class SimpleEnvelope<T> {
   readonly simpleEnvelopeProps: SimpleEnvelopeProps<T>;
   readonly envJsonStrings: string[] = [];
-  readonly envJsonC: JsonCollector;
+  readonly envJsonC: ogs.JsonCollector;
   public envelope?: Envelope<T>;
-  public dataJsonHash?: JsonHash;
+  public dataJsonHash?: ogs.JsonHash;
 
   constructor(env: SimpleEnvelopeProps<T>) {
     this.simpleEnvelopeProps = {
       ...env,
       idGenerator: env.idGenerator ? env.idGenerator : tHashIdGenerator
     }
-    this.envJsonC = new JsonCollector(
+    this.envJsonC = new ogs.JsonCollector(
       (part) => this.envJsonStrings.push(part),
       this.simpleEnvelopeProps.jsonProp
     );
@@ -207,9 +62,9 @@ export class SimpleEnvelope<T> {
     return this.lazy().envelope!;
   }
 
-  private toDataJson(): JsonHash {
+  private toDataJson(): ogs.JsonHash {
     const dataJsonStrings: string[] = [];
-    const dataJsonC = new JsonCollector((part) => dataJsonStrings.push(part), {
+    const dataJsonC = new ogs.JsonCollector((part) => dataJsonStrings.push(part), {
       ...this.simpleEnvelopeProps.jsonProp,
       // "data": { "data": { this stuff } } ==> 2
       newLine:
@@ -218,21 +73,21 @@ export class SimpleEnvelope<T> {
           .fill(" ")
           .join(""),
     });
-    let dataHashC: HashCollector = undefined as unknown as HashCollector;
-    let dataProcessor: SValFn;
+    let dataHashC: ogs.HashCollector = undefined as unknown as ogs.HashCollector;
+    let dataProcessor: ogs.SValFn;
     if (this.simpleEnvelopeProps.id) {
-      dataProcessor = (sval) => {
+      dataProcessor = (sval: ogs.SVal) => {
         dataJsonC.append(sval);
       };
     } else {
-      dataHashC = new HashCollector();
-      dataProcessor = (sval: SVal) => {
+      dataHashC = new ogs.HashCollector();
+      dataProcessor = (sval: ogs.SVal) => {
         // console.log("dataP:", sval);
         dataHashC.append(sval);
         dataJsonC.append(sval);
       };
     }
-    sortKeys(this.simpleEnvelopeProps.data.data, dataProcessor);
+    ogs.objectGraphStreamer(this.simpleEnvelopeProps.data.data, dataProcessor);
     // da muss das hin
     return {
       jsonStr: dataJsonStrings.join(""),
@@ -264,7 +119,7 @@ export class SimpleEnvelope<T> {
       },
     };
     let nextValue = false;
-    sortKeys(envelope, (sval) => {
+    ogs.objectGraphStreamer(envelope, (sval: ogs.SVal) => {
       let oval = sval;
       if (sval.attribute === "data") {
         nextValue = true;
@@ -272,7 +127,7 @@ export class SimpleEnvelope<T> {
         if (sval.val && sval.val.asValue() === undefined) {
           oval = {
             ...sval,
-            val: new PlainValType(this.asDataJson()),
+            val: new ogs.PlainValType(this.asDataJson()),
           };
         }
         nextValue = false;
@@ -296,93 +151,4 @@ export function simpleEnvelope<T>(
   env: SimpleEnvelopeProps<T>
 ): SimpleEnvelope<T> {
   return new SimpleEnvelope(env);
-}
-
-export function lexicalSort(a: number | string, b: number | string): number {
-  if (a < b) {
-    return -1;
-  }
-  if (a > b) {
-    return 1;
-  }
-  return 0;
-}
-
-type ValueType = string | number | boolean | Date | undefined;
-
-export interface ValType {
-  toString(): string;
-  asValue(): any;
-}
-
-export class JsonValType implements ValType {
-  readonly val: ValueType;
-
-  constructor(val: ValueType) {
-    this.val = val;
-  }
-
-  public asValue() {
-    return this.val;
-  }
-
-  public toString() {
-    return JSON.stringify(this.val);
-  }
-}
-
-export class PlainValType implements ValType {
-  readonly val: string;
-
-  constructor(val: string) {
-    this.val = val;
-  }
-
-  public asValue() {
-    return this.val;
-  }
-
-  public toString() {
-    return this.val;
-  }
-}
-
-export enum OutState {
-  NONE = "NE",
-  ARRAY_START = "AS",
-  ARRAY_END = "AE",
-  OBJECT_START = "OS",
-  OBJECT_END = "OE",
-}
-
-export interface SVal {
-  readonly attribute?: string;
-  readonly val?: ValType;
-  readonly outState?: OutState;
-}
-
-export type SValFn = (prob: SVal) => void;
-
-export function sortKeys<T>(e: T, out: SValFn): void {
-  if (Array.isArray(e)) {
-    out({ outState: OutState.ARRAY_START });
-    e.forEach((i) => {
-      sortKeys(i, out);
-    });
-    out({ outState: OutState.ARRAY_END });
-    return;
-  } else if (typeof e === "object" && !(e instanceof Date)) {
-    out({ outState: OutState.OBJECT_START });
-    Object.keys(e)
-      .sort(lexicalSort)
-      .forEach((i) => {
-        out({ attribute: i });
-        sortKeys((e as any)[i], out);
-      });
-    out({ outState: OutState.OBJECT_END });
-    return;
-  } else {
-    out({ val: new JsonValType(e as unknown as ValueType) });
-    return;
-  }
 }

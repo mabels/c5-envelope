@@ -1,3 +1,4 @@
 base58
+object-graph-streamer==0.0.1
 build
 twine

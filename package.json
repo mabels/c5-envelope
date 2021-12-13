@@ -4,22 +4,26 @@
   "description": "C5-ENVELOPE Repository",
   "main": "./dist/src/index.js",
   "scripts": {
-    "build": "npm run generate-ts; npm run compile; npm run generate-jschema; npm run generate-python; npm run generate-csharp; npm run generate-java ; npm run generate-golang",
+    "build": "npm run generate:ts; npm run compile; npm run generate:jschema; npm run generate:python; npm run generate:csharp; npm run generate:java ; npm run generate:golang",
     "compile": "tsc",
-    "generate-ts": "mkdir -p src/lang/ts && cd schema && node ../../quicktype/target/index.js --lang typescript -s typscript ./envelope.ts ./payload.ts ./sample.ts -o ../src/lang/ts/envelope.ts",
-    "generate-jschema": "mkdir -p src/lang/jschema && cd schema && node ../../quicktype/target/index.js --lang schema -s typescript ./envelope.ts ./payload.ts ./sample.ts -o ../src/lang/jschema/envelope.json",
-    "generate-python": "mkdir -p src/lang/python && cd schema && node ../../quicktype/target/index.js --lang python -s python ./envelope.ts ./payload.ts ./sample.ts -o ../src/lang/python/envelope.py",
-    "generate-csharp": "mkdir -p src/lang/csharp && cd schema && node ../../quicktype/target/index.js --lang csharp -s csharp ./envelope.ts ./payload.ts ./sample.ts -o ../src/lang/csharp/envelope.cs",
-    "generate-java": "mkdir -p src/lang/java && cd schema && node ../../quicktype/target/index.js --lang java -s java ./envelope.ts ./payload.ts ./sample.ts -o ../src/lang/java/envelope.java",
-    "generate-golang": "cd schema && node ../../quicktype/target/index.js --lang go -s go ./envelope.ts ./payload.ts ./sample.ts -o ../pkg/envelope.go --package c5",
-    "test": "jest",
-    "test-python": "python -m unittest discover -s src -p '*_test.py'"
+    "generate:ts": "mkdir -p src/lang/ts && cd schema && node ../../quicktype/target/index.js --lang typescript -s typscript ./envelope.ts ./payload.ts ./sample.ts -o ../src/lang/ts/envelope.ts",
+    "generate:jschema": "mkdir -p src/lang/jschema && cd schema && node ../../quicktype/target/index.js --lang schema -s typescript ./envelope.ts ./payload.ts ./sample.ts -o ../src/lang/jschema/envelope.json",
+    "generate:python": "mkdir -p src/lang/python && cd schema && node ../../quicktype/target/index.js --lang python -s python ./envelope.ts ./payload.ts ./sample.ts -o ../src/lang/python/envelope.py",
+    "generate:csharp": "mkdir -p src/lang/csharp && cd schema && node ../../quicktype/target/index.js --lang csharp -s csharp ./envelope.ts ./payload.ts ./sample.ts -o ../src/lang/csharp/envelope.cs",
+    "generate:java": "mkdir -p src/lang/java && cd schema && node ../../quicktype/target/index.js --lang java -s java ./envelope.ts ./payload.ts ./sample.ts -o ../src/lang/java/envelope.java",
+    "generate:golang": "cd schema && node ../../quicktype/target/index.js --lang go -s go ./envelope.ts ./payload.ts ./sample.ts -o ../pkg/envelope.go --package c5",
+    "test": "npm run test:js",
+    "test:all": "npm run test:js; npm run test:python; npm run test:go",
+    "test:js": "jest",
+    "test:python": "python3 -m src.simple_envelope_test",
+    "test:go": "go test github.com/mabels/c5-envelope/pkg"
   },
   "homepage": "https://github.com/mabels/c5-envelope#readme",
   "author": "Meno Abels",
   "license": "AFL-2.0",
   "dependencies": {
-    "base-x": "^3.0.9"
+    "base-x": "^3.0.9",
+    "object-graph-streamer": "^0.0.1"
   },
   "devDependencies": {
     "@types/jest": "^27.0.3",

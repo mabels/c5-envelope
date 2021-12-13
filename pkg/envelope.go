@@ -49,7 +49,6 @@
 package c5
 
 import "fmt"
-import "errors"
 import "encoding/json"
 
 type T map[string]interface{}
@@ -160,7 +159,7 @@ func FromDictEnvelopeT(data map[string]interface{}, r *EnvelopeT) error {
 			}
 		}
 		default: {
-			return errors.New(fmt.Sprintf("unknown array type:%T", v))
+			return fmt.Errorf("unknown array type:%T", v)
 		}
 	}
 	r.ID = data["id"].(string)
@@ -191,7 +190,7 @@ func FromDictEnvelopeT(data map[string]interface{}, r *EnvelopeT) error {
 			r.T = float64(v)
 		}
 		default: {
-			return errors.New(fmt.Sprintf("unable to coerce number:%T", v))
+			return fmt.Errorf("unable to coerce number:%T", v)
 		}
 	}
 	switch v := data["ttl"].(type) {
@@ -220,7 +219,7 @@ func FromDictEnvelopeT(data map[string]interface{}, r *EnvelopeT) error {
 			r.TTL = float64(v)
 		}
 		default: {
-			return errors.New(fmt.Sprintf("unable to coerce number:%T", v))
+			return fmt.Errorf("unable to coerce number:%T", v)
 		}
 	}
 	{
@@ -357,7 +356,7 @@ func FromDictSampleY(data map[string]interface{}, r *SampleY) error {
 			r.Y = float64(v)
 		}
 		default: {
-			return errors.New(fmt.Sprintf("unable to coerce number:%T", v))
+			return fmt.Errorf("unable to coerce number:%T", v)
 		}
 	}
 	return nil
@@ -372,7 +371,7 @@ func FromV(v string) (V, error) {
 		case "A":
 			return V_A, nil
 		default:
-			return V_A, errors.New(fmt.Sprintf("Enum not found for:%s", v))
+			return V_A, fmt.Errorf("Enum not found for:%s", v)
 	}
 }
 func ToV(v V) string {
