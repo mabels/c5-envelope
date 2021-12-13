@@ -75,7 +75,8 @@ setuptools.setup(
   author_email='meno.abels@adviser.com',
   setup_requires=[],
   install_requires=[
-      'base58'
+      'base58',
+      'object-graph-streamer'
   ],
   ext_modules=[],
   packages=['c5_envelope', 'c5_envelope.lang.python'],
